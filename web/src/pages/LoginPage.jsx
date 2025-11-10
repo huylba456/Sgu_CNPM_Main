@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { useCart } from '../hooks/useCart.js';
 
 const LoginPage = () => {
   const { login, logout, register } = useAuth();
+  const { clearCart } = useCart();
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
   const [message, setMessage] = useState('');
@@ -72,6 +74,7 @@ const LoginPage = () => {
   };
 
   const handleContinueAsGuest = () => {
+    clearCart();
     logout();
     navigate('/', { replace: true });
   };
