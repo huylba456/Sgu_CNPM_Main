@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.js';
 
 const ProductCard = ({ product }) => {
+  const { user } = useAuth();
+  const isGuest = !user;
 
   return (
     <div className="card">
@@ -16,7 +19,7 @@ const ProductCard = ({ product }) => {
           <Link to={`/products/${product.id}`} className="ghost-button">
             Chi tiết
           </Link>
-          <small className="muted">Đặt món online sẽ được bổ sung sau.</small>
+          {isGuest && <small className="muted">Đăng nhập để đặt món trong giai đoạn tiếp theo.</small>}
         </div>
       </div>
     </div>
