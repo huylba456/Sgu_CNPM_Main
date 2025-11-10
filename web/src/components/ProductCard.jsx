@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
 
 const ProductCard = ({ product }) => {
+  const { addToCart } = useCart();
   const { user } = useAuth();
   const isGuest = !user;
 
@@ -16,10 +18,20 @@ const ProductCard = ({ product }) => {
         <p className="description">{product.description}</p>
         <div className="card-footer">
           <span className="price">{product.price.toLocaleString()} đ</span>
-          <Link to={`/products/${product.id}`} className="ghost-button">
-            Chi tiết
-          </Link>
-          {isGuest && <small className="muted">Đăng nhập để đặt món trong giai đoạn tiếp theo.</small>}
+          <div className="actions">
+            <Link to={`/products/${product.id}`} className="ghost-button">
+              Chi tiết
+            </Link>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => addToCart(product)}
+              disabled={isGuest}
+              title={isGuest ? 'Đăng nhập để đặt món' : undefined}
+            >
+              Thêm vào giỏ
+            </button>
+          </div>
         </div>
       </div>
     </div>
