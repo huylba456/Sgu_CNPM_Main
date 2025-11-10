@@ -1,8 +1,19 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
+import { useCart } from '../hooks/useCart.js';
+import DroneTracker from './DroneTracker.jsx';
 
 const Layout = () => {
   const { user, logout } = useAuth();
+  const { cartItems, clearCart } = useCart();
+  const location = useLocation();
+
+  const hideTrackerRoutes = ['/', '/cart', '/checkout', '/products', '/orders', '/profile'];
+  const shouldHideForPrefix = ['/products', '/orders'].some((prefix) => location.pathname.startsWith(prefix));
+  const shouldShowDroneTracker =
+    !hideTrackerRoutes.includes(location.pathname) && !shouldHideForPrefix;
+
+  const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const navLinkClass = ({ isActive }) => (isActive ? 'nav-link active' : 'nav-link');
 
@@ -21,8 +32,18 @@ const Layout = () => {
           <NavLink to="/products" className={navLinkClass}>
             Sản phẩm
           </NavLink>
+          {isAuthenticated && (
+            <NavLink to="/orders" className={navLinkClass}>
+              Đơn hàng
+            </NavLink>
+          )}
         </nav>
         <div className="header-actions">
+          {isAuthenticated && (
+            <Link to="/cart" className="header-link">
+              Giỏ hàng ({cartItemCount})
+            </Link>
+          )}
           {user?.role === 'customer' && (
             <Link to="/profile" className="header-link">
               Hồ sơ
@@ -31,7 +52,10 @@ const Layout = () => {
           {isAuthenticated ? (
             <button
               type="button"
-              onClick={logout}
+              onClick={() => {
+                clearCart();
+                logout();
+              }}
               className="ghost-button"
             >
               Đăng xuất
@@ -43,9 +67,16 @@ const Layout = () => {
           )}
         </div>
       </header>
-      <main className="app-main">
-        <Outlet />
-      </main>
+      <div className={`app-content${shouldShowDroneTracker ? '' : ' no-aside'}`}>
+        <main className="app-main">
+          <Outlet />
+        </main>
+        {shouldShowDroneTracker && (
+          <aside className="app-aside">
+            <DroneTracker />
+          </aside>
+        )}
+      </div>
     </div>
   );
 };
