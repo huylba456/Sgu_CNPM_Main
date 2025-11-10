@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { products } from '../data/mockProducts.js';
+import { useAuth } from '../hooks/useAuth.js';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const isGuest = !user;
   const product = useMemo(() => products.find((item) => item.id === id), [id]);
 
   if (!product) {
@@ -28,7 +31,7 @@ const ProductDetailPage = () => {
         </ul>
         <div className="actions">
           <span className="price">{product.price.toLocaleString()} đ</span>
-          <small className="muted">Đặt món sẽ khả dụng từ giai đoạn tiếp theo.</small>
+          {isGuest && <small className="muted">Đăng nhập để đặt món trong giai đoạn tiếp theo.</small>}
         </div>
       </div>
     </div>
