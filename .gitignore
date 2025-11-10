@@ -1,0 +1,8 @@
+Web/node_modules/
+Web/dist/
+Web/build/
+web/node_modules/
+web/dist/
+web/build/
+mobile/node_modules/
+mobile/.expo/
