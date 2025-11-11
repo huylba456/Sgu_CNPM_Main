@@ -37,6 +37,16 @@ const Layout = () => {
               Đơn hàng
             </NavLink>
           )}
+          {user?.role === 'admin' && (
+            <NavLink to="/admin" className={navLinkClass}>
+              Admin
+            </NavLink>
+          )}
+          {(user?.role === 'restaurant' || user?.role === 'admin') && (
+            <NavLink to="/restaurant" className={navLinkClass}>
+              Nhà hàng
+            </NavLink>
+          )}
         </nav>
         <div className="header-actions">
           {isAuthenticated && (

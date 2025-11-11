@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
+import AdminLayout from './components/AdminLayout.jsx';
+import RestaurantLayout from './components/RestaurantLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import ProductsPage from './pages/ProductsPage.jsx';
 import ProductDetailPage from './pages/ProductDetailPage.jsx';
@@ -9,6 +11,14 @@ import OrdersPage from './pages/OrdersPage.jsx';
 import OrderDetailPage from './pages/OrderDetailPage.jsx';
 import CustomerProfilePage from './pages/CustomerProfilePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
+import AdminProductsPage from './pages/admin/AdminProductsPage.jsx';
+import AdminUsersPage from './pages/admin/AdminUsersPage.jsx';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage.jsx';
+import AdminDronesPage from './pages/admin/AdminDronesPage.jsx';
+import RestaurantDashboardPage from './pages/restaurant/RestaurantDashboardPage.jsx';
+import RestaurantProductsPage from './pages/restaurant/RestaurantProductsPage.jsx';
+import RestaurantOrdersPage from './pages/restaurant/RestaurantOrdersPage.jsx';
 import { useAuth } from './hooks/useAuth.js';
 
 const ProtectedRoute = ({ children, allowed }) => {
@@ -73,6 +83,32 @@ function App() {
             </ProtectedRoute>
           }
         />
+      </Route>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowed={["admin"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="products" element={<AdminProductsPage />} />
+        <Route path="drones" element={<AdminDronesPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+      </Route>
+      <Route
+        path="/restaurant"
+        element={
+          <ProtectedRoute allowed={["restaurant", "admin"]}>
+            <RestaurantLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<RestaurantDashboardPage />} />
+        <Route path="products" element={<RestaurantProductsPage />} />
+        <Route path="orders" element={<RestaurantOrdersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
