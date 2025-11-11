@@ -1,1 +1,6 @@
-# Sgu_CNPM_Main
+## Cách chạy
+```bash
+cd web
+npm install
+npm run dev
+```
