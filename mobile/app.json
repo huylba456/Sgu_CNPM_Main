@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "FoodFast Mobile",
+    "slug": "foodfast-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "jsEngine": "hermes",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.foodfast.mobile"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

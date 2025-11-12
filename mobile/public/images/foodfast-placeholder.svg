@@ -1,0 +1,12 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f2f4f7" rx="16" />
+  <g fill="none" stroke="#d0d7de" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M120 180h160" />
+    <path d="M140 140h120" />
+    <circle cx="200" cy="110" r="28" />
+    <path d="M160 220h80" />
+  </g>
+  <text x="200" y="260" font-family="'Segoe UI', sans-serif" font-size="24" fill="#637381" text-anchor="middle">
+    FoodFast Placeholder
+  </text>
+</svg>
