@@ -20,10 +20,63 @@ import OrdersScreen from './src/screens/OrdersScreen';
 import OrderDetailScreen from './src/screens/OrderDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import AdminDashboardScreen from './src/screens/admin/AdminDashboardScreen';
+import AdminProductsScreen from './src/screens/admin/AdminProductsScreen';
+import AdminOrdersScreen from './src/screens/admin/AdminOrdersScreen';
+import AdminUsersScreen from './src/screens/admin/AdminUsersScreen';
+import AdminDronesScreen from './src/screens/admin/AdminDronesScreen';
+import RestaurantDashboardScreen from './src/screens/restaurant/RestaurantDashboardScreen';
+import RestaurantProductsScreen from './src/screens/restaurant/RestaurantProductsScreen';
+import RestaurantOrdersScreen from './src/screens/restaurant/RestaurantOrdersScreen';
 import { useCart } from './src/hooks/useCart';
 
 const RootStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const AdminStack = createNativeStackNavigator();
+const RestaurantStack = createNativeStackNavigator();
+
+const AdminNavigator = () => (
+  <AdminStack.Navigator
+    screenOptions={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
+  >
+    <AdminStack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
+    <AdminStack.Screen name="AdminProducts" component={AdminProductsScreen} options={{ title: 'Sản phẩm' }} />
+    <AdminStack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ title: 'Đơn hàng' }} />
+    <AdminStack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'Tài khoản' }} />
+    <AdminStack.Screen name="AdminDrones" component={AdminDronesScreen} options={{ title: 'Đội drone' }} />
+  </AdminStack.Navigator>
+);
+
+const RestaurantNavigator = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  return (
+    <RestaurantStack.Navigator
+      screenOptions={{ headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
+    >
+      <RestaurantStack.Screen
+        name="RestaurantDashboard"
+        component={RestaurantDashboardScreen}
+        options={{ title: 'Tổng quan' }}
+      />
+      {!isAdmin ? (
+        <>
+          <RestaurantStack.Screen
+            name="RestaurantProducts"
+            component={RestaurantProductsScreen}
+            options={{ title: 'Món ăn' }}
+          />
+          <RestaurantStack.Screen
+            name="RestaurantOrders"
+            component={RestaurantOrdersScreen}
+            options={{ title: 'Đơn hàng' }}
+          />
+        </>
+      ) : null}
+    </RestaurantStack.Navigator>
+  );
+};
 
 const MainTabs = () => {
   const { user } = useAuth();
