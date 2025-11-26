@@ -1,0 +1,415 @@
+{
+  "products": [
+    {
+      "id": "p1",
+      "name": "Burger Wagyu Signature",
+      "category": "Burger",
+      "price": 189000,
+      "description": "Burger Wagyu nướng than hoa cùng sốt truffle béo ngậy.",
+      "image": "/images/Burger_Wagyu_Signature.jpeg",
+      "restaurant": "FastGrill Station",
+      "rating": 4.8,
+      "deliveryTime": 12
+    },
+    {
+      "id": "p2",
+      "name": "Combo Sushi Thượng Hạng",
+      "category": "Sushi",
+      "price": 259000,
+      "description": "12 miếng sushi cá hồi, cá ngừ, bạch tuộc với wasabi tươi.",
+      "image": "/images/Combo_Sushi_Thuong_Hang.jpg",
+      "restaurant": "Sora Sushi Bay",
+      "rating": 4.9,
+      "deliveryTime": 15
+    },
+    {
+      "id": "p3",
+      "name": "Pizza Hải Sản Pesto",
+      "category": "Pizza",
+      "price": 219000,
+      "description": "Tôm, mực, pesto, phô mai mozzarella nhập khẩu.",
+      "image": "/images/Pizza_Pesto.jpg",
+      "restaurant": "La Piazza Drone Hub",
+      "rating": 4.7,
+      "deliveryTime": 10
+    },
+    {
+      "id": "p4",
+      "name": "Salad Detox Xanh",
+      "category": "Healthy",
+      "price": 99000,
+      "description": "Rau củ hữu cơ, hạt quinoa và sốt yuzu nhẹ nhàng.",
+      "image": "/images/Salad_Detox.jpg",
+      "restaurant": "Green Lab Kitchen",
+      "rating": 4.5,
+      "deliveryTime": 8
+    },
+    {
+      "id": "p5",
+      "name": "Tiramisu Espresso",
+      "category": "Dessert",
+      "price": 79000,
+      "description": "Lớp mascarpone mềm mịn với espresso nguyên chất.",
+      "image": "/images/Tiramisu_Espresso.jpg",
+      "restaurant": "Dolce Vita",
+      "rating": 4.6,
+      "deliveryTime": 9
+    },
+    {
+      "id": "p6",
+      "name": "Burger Gà Sốt Cay",
+      "category": "Burger",
+      "price": 129000,
+      "description": "Ức gà hữu cơ chiên áp chảo, sốt cay mật ong.",
+      "image": "/images/Burger_Ga.jpg",
+      "restaurant": "FastGrill Station",
+      "rating": 4.3,
+      "deliveryTime": 11
+    },
+    {
+      "id": "p7",
+      "name": "Set Sushi Chay",
+      "category": "Sushi",
+      "price": 179000,
+      "description": "Sushi rong biển, bơ, dưa leo và nấm shiitake.",
+      "image": "/images/Set_Sushi_Chay.jpg",
+      "restaurant": "Sora Sushi Bay",
+      "rating": 4.4,
+      "deliveryTime": 16
+    },
+    {
+      "id": "p8",
+      "name": "Mì Ý Hải Sản",
+      "category": "Pasta",
+      "price": 149000,
+      "description": "Mì linguine tôm mực, sốt kem hải sản đậm đà.",
+      "image": "/images/Pasta_Hai_San.jpg",
+      "restaurant": "La Piazza Drone Hub",
+      "rating": 4.4,
+      "deliveryTime": 14
+    },
+    {
+      "id": "p9",
+      "name": "Trà Hoa Hồng Mật Ong",
+      "category": "Drink",
+      "price": 59000,
+      "description": "Trà hoa hồng ủ lạnh cùng mật ong nguyên chất.",
+      "image": "/images/Hoahong_Matong.jpg",
+      "restaurant": "Dolce Vita",
+      "rating": 4.2,
+      "deliveryTime": 6
+    },
+    {
+      "id": "p10",
+      "name": "Pizza Margherita Classic",
+      "category": "Pizza",
+      "price": 159000,
+      "description": "Cà chua San Marzano, basil tươi và phô mai mozzarella.",
+      "image": "/images/Pizza_Margherita.jpeg",
+      "restaurant": "La Piazza Drone Hub",
+      "rating": 4.5,
+      "deliveryTime": 13
+    },
+    {
+      "id": "p11",
+      "name": "Smoothie Xoài Chia",
+      "category": "Drink",
+      "price": 69000,
+      "description": "Sinh tố xoài chín, hạt chia và sữa hạnh nhân.",
+      "image": "/images/SmoothieXoai.jpg",
+      "restaurant": "Green Lab Kitchen",
+      "rating": 4.3,
+      "deliveryTime": 7
+    },
+    {
+      "id": "p12",
+      "name": "Cheesecake Việt Quất",
+      "category": "Dessert",
+      "price": 89000,
+      "description": "Cheesecake mềm mịn phủ sốt việt quất tươi.",
+      "image": "/images/CheeseCake.jpg",
+      "restaurant": "Dolce Vita",
+      "rating": 4.7,
+      "deliveryTime": 9
+    }
+  ],
+  "restaurants": [
+    {
+      "id": "r1",
+      "name": "FastGrill Station",
+      "address": "Thảo Điền, TP. Thủ Đức",
+      "contact": "0908123456",
+      "dronePad": "Pad-05",
+      "image": "/images/foodfast-placeholder.svg",
+      "revenue": 205000000
+    },
+    {
+      "id": "r2",
+      "name": "Sora Sushi Bay",
+      "address": "Quận 1, TP. HCM",
+      "contact": "0908787878",
+      "dronePad": "Pad-11",
+      "image": "/images/foodfast-placeholder.svg",
+      "revenue": 178000000
+    },
+    {
+      "id": "r3",
+      "name": "La Piazza Drone Hub",
+      "address": "Quận 3, TP. HCM",
+      "contact": "0908111333",
+      "dronePad": "Pad-21",
+      "image": "/images/foodfast-placeholder.svg",
+      "revenue": 164000000
+    },
+    {
+      "id": "r4",
+      "name": "Green Lab Kitchen",
+      "address": "Quận 7, TP. HCM",
+      "contact": "0908222444",
+      "dronePad": "Pad-07",
+      "image": "/images/foodfast-placeholder.svg",
+      "revenue": 142000000
+    },
+    {
+      "id": "r5",
+      "name": "Dolce Vita",
+      "address": "Phú Nhuận, TP. HCM",
+      "contact": "0908333555",
+      "dronePad": "Pad-14",
+      "image": "/images/foodfast-placeholder.svg",
+      "revenue": 138000000
+    }
+  ],
+  "drones": [
+    {
+      "id": "DR-01",
+      "status": "Hoạt động",
+      "battery": 82,
+      "dailyDeliveries": 14,
+      "totalDeliveries": 468,
+      "distance": 128
+    },
+    {
+      "id": "DR-02",
+      "status": "Đang bảo trì",
+      "battery": 8,
+      "dailyDeliveries": 6,
+      "totalDeliveries": 382,
+      "distance": 101
+    },
+    {
+      "id": "DR-03",
+      "status": "Hoạt động",
+      "battery": 67,
+      "dailyDeliveries": 11,
+      "totalDeliveries": 512,
+      "distance": 156
+    },
+    {
+      "id": "DR-04",
+      "status": "Hoạt động",
+      "battery": 67,
+      "dailyDeliveries": 11,
+      "totalDeliveries": 512,
+      "distance": 156
+    },
+    {
+      "id": "DR-05",
+      "status": "Hoạt động",
+      "battery": 67,
+      "dailyDeliveries": 11,
+      "totalDeliveries": 512,
+      "distance": 156
+    },
+    {
+      "id": "DR-06",
+      "status": "Hoạt động",
+      "battery": 67,
+      "dailyDeliveries": 11,
+      "totalDeliveries": 512,
+      "distance": 156
+    }
+  ],
+  "routes": [
+    {
+      "orderId": "#o1",
+      "restaurant": "FastGrill Station",
+      "customer": "Vinhomes Grand Park",
+      "points": [
+        { "lat": 10, "lng": 5 },
+        { "lat": 20, "lng": 10 },
+        { "lat": 35, "lng": 20 },
+        { "lat": 50, "lng": 30 },
+        { "lat": 70, "lng": 45 },
+        { "lat": 85, "lng": 60 }
+      ]
+    },
+    {
+      "orderId": "#o4",
+      "restaurant": "Sora Sushi Bay",
+      "customer": "Landmark 81",
+      "points": [
+        { "lat": 12, "lng": 10 },
+        { "lat": 24, "lng": 20 },
+        { "lat": 40, "lng": 35 },
+        { "lat": 60, "lng": 50 },
+        { "lat": 80, "lng": 70 }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": "c5248e41-b659-4a68-875a-2547h8hg6542",
+      "customerName": "Mai Anh",
+      "customerEmail": "customer@foodfast.io",
+      "customerAddress": "Vinhomes Grand Park",
+      "deliveryAddress": "Vinhomes Grand Park",
+      "deliveryCoordinates": { "lat": 10.843018, "lng": 106.828537 },
+      "paymentMethod": "Ví FoodFast Pay",
+      "items": [
+        { "id": "p1", "name": "Burger Wagyu Signature", "price": 189000, "quantity": 1 },
+        { "id": "p6", "name": "Burger Gà Sốt Cay", "price": 129000, "quantity": 1 }
+      ],
+      "total": 318000,
+      "status": "shipping",
+      "droneId": "DR-01",
+      "restaurantId": "r1",
+      "placedAt": "2024-05-01T10:15:00Z"
+    },
+    {
+      "id": "c8852e41-b659-4a67-996a-2983c7bc3897",
+      "customerName": "Hữu Phát",
+      "customerEmail": "phat@foodfast.io",
+      "customerAddress": "Landmark 81",
+      "deliveryAddress": "Landmark 81",
+      "deliveryCoordinates": { "lat": 10.794167, "lng": 106.722222 },
+      "paymentMethod": "Thẻ tín dụng",
+      "items": [
+        { "id": "p2", "name": "Combo Sushi Thượng Hạng", "price": 259000, "quantity": 1 }
+      ],
+      "total": 259000,
+      "status": "delivered",
+      "droneId": "DR-02",
+      "restaurantId": "r2",
+      "placedAt": "2024-04-28T18:45:00Z"
+    },
+    {
+      "id": "c8523d81-z785-9y52-366t-9957d8gh2234",
+      "customerName": "Tú Anh",
+      "customerEmail": "tuanh@foodfast.io",
+      "customerAddress": "Thủ Thiêm Eco",
+      "deliveryAddress": "Thủ Thiêm Eco",
+      "deliveryCoordinates": { "lat": 10.781135, "lng": 106.730743 },
+      "paymentMethod": "Chuyển khoản",
+      "items": [
+        { "id": "p4", "name": "Salad Detox Xanh", "price": 99000, "quantity": 2 },
+        { "id": "p11", "name": "Smoothie Xoài Chia", "price": 69000, "quantity": 1 }
+      ],
+      "total": 267000,
+      "status": "pending",
+      "droneId": null,
+      "restaurantId": "r4",
+      "placedAt": "2024-05-02T08:30:00Z"
+    },
+    {
+      "id": "c8965j78-t552-9q53-665g-2367c2hj5423",
+      "customerName": "Bích Ngọc",
+      "customerEmail": "ngoc@foodfast.io",
+      "customerAddress": "Sala Đại Quang Minh",
+      "deliveryAddress": "Sala Đại Quang Minh",
+      "deliveryCoordinates": { "lat": 10.780379, "lng": 106.716589 },
+      "paymentMethod": "Ví FoodFast Pay",
+      "items": [
+        { "id": "p8", "name": "Mì Ý Hải Sản", "price": 149000, "quantity": 1 },
+        { "id": "p10", "name": "Pizza Margherita Classic", "price": 159000, "quantity": 1 }
+      ],
+      "total": 308000,
+      "status": "shipping",
+      "droneId": "DR-03",
+      "restaurantId": "r3",
+      "placedAt": "2024-05-03T11:10:00Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "u1",
+      "name": "Mai Anh",
+      "email": "customer@foodfast.io",
+      "password": "123456",
+      "role": "customer",
+      "address": "Tầng 25, Toà S1.05, Vinhomes Grand Park",
+      "phone": "0901234567",
+      "status": "active"
+    },
+    {
+      "id": "u2",
+      "name": "Ngọc Bích",
+      "email": "admin@foodfast.io",
+      "password": "admin",
+      "role": "admin",
+      "address": "Trung tâm điều hành FoodFast, Thủ Đức",
+      "phone": "0909000090",
+      "status": "active"
+    },
+    {
+      "id": "u3",
+      "name": "Đức Huy",
+      "email": "restaurant@foodfast.io",
+      "password": "restaurant",
+      "role": "restaurant",
+      "restaurantId": "r1",
+      "restaurantName": "FastGrill Station",
+      "address": "FastGrill Station - Thảo Điền",
+      "phone": "0908765432",
+      "status": "active"
+    },
+    {
+      "id": "u4",
+      "name": "Minh Tùng",
+      "email": "sushi@foodfast.io",
+      "password": "sushi",
+      "role": "restaurant",
+      "restaurantId": "r2",
+      "restaurantName": "Sora Sushi Bay",
+      "address": "Sora Sushi Bay - Quận 1",
+      "phone": "0908787878",
+      "status": "active"
+    },
+    {
+      "id": "u5",
+      "name": "Lan Chi",
+      "email": "lapiazza@foodfast.io",
+      "password": "lapiazza",
+      "role": "restaurant",
+      "restaurantId": "r3",
+      "restaurantName": "La Piazza Drone Hub",
+      "address": "La Piazza Drone Hub - Quận 3",
+      "phone": "0908111333",
+      "status": "active"
+    },
+    {
+      "id": "u6",
+      "name": "Thảo Nguyên",
+      "email": "greenlab@foodfast.io",
+      "password": "greenlab",
+      "role": "restaurant",
+      "restaurantId": "r4",
+      "restaurantName": "Green Lab Kitchen",
+      "address": "Green Lab Kitchen - Quận 7",
+      "phone": "0908222444",
+      "status": "active"
+    },
+    {
+      "id": "u7",
+      "name": "Hoàng Nam",
+      "email": "dolcevita@foodfast.io",
+      "password": "dolcevita",
+      "role": "restaurant",
+      "restaurantId": "r5",
+      "restaurantName": "Dolce Vita",
+      "address": "Dolce Vita - Phú Nhuận",
+      "phone": "0908333555",
+      "status": "active"
+    }
+  ]
+}
