@@ -3,3 +3,4 @@ web/dist/
 web/build/
 mobile/node_modules/
 mobile/.expo/
+firestore-seed/node_modules
