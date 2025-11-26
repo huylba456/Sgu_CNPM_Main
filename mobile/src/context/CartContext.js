@@ -50,7 +50,17 @@ export const CartProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       cartItems: state.items,
-      addToCart: (product) => dispatch({ type: 'ADD_ITEM', payload: product }),
+      addToCart: (product) => {
+        const firstRestaurant = state.items[0]?.restaurant;
+        const nextRestaurant = product.restaurant;
+
+        if (firstRestaurant && nextRestaurant && firstRestaurant !== nextRestaurant) {
+          alert('Vui lòng đặt đơn theo từng nhà hàng');
+          return;
+        }
+
+        dispatch({ type: 'ADD_ITEM', payload: product });
+      },
       removeFromCart: (id) => dispatch({ type: 'REMOVE_ITEM', payload: id }),
       updateQuantity: (id, quantity) =>
         dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } }),

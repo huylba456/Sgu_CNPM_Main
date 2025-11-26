@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import Card from './Card';
 import Button from './Button';
+import Stack from './Stack';
 import { colors, radius, spacing, typography } from '../styles/theme';
 import { resolveProductImage } from '../utils/resolveProductImage';
 
@@ -15,40 +16,38 @@ const ProductCard = ({ product }) => {
   const imageSource = resolveProductImage(product.image);
 
   return (
-    <Card style={styles.card}>
-      <View style={styles.imageWrapper}>
-        <Image source={imageSource} style={styles.image} resizeMode="cover" />
-      </View>
-      <View style={styles.body}>
-        <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.restaurant}>{product.restaurant}</Text>
-        <Text style={styles.description}>{product.description}</Text>
-        <View style={styles.footer}>
-          <Text style={styles.price}>{product.price.toLocaleString('vi-VN')} đ</Text>
-          <View style={styles.actions}>
-            <Button
-              label="Chi tiết"
-              variant="ghost"
-              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
-            />
-            <Button
-              label="Thêm"
-              onPress={() => addToCart(product)}
-              disabled={isGuest}
-              style={styles.addButton}
-            />
-          </View>
+    <Card>
+      <Stack gap={spacing.md}>
+        <View style={styles.imageWrapper}>
+          <Image source={imageSource} style={styles.image} resizeMode="cover" />
         </View>
-      </View>
+        <Stack gap={spacing.xs}>
+          <Text style={styles.name}>{product.name}</Text>
+          <Text style={styles.restaurant}>{product.restaurant}</Text>
+          <Text style={styles.description}>{product.description}</Text>
+          <Stack gap={spacing.sm}>
+            <Text style={styles.price}>{product.price.toLocaleString('vi-VN')} đ</Text>
+            <Stack direction="row" gap={spacing.sm} wrap>
+              <Button
+                label="Chi tiết"
+                variant="ghost"
+                onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+              />
+              <Button
+                label="Thêm"
+                onPress={() => addToCart(product)}
+                disabled={isGuest}
+                style={styles.addButton}
+              />
+            </Stack>
+          </Stack>
+        </Stack>
+      </Stack>
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    alignSelf: 'stretch',
-    gap: spacing.md
-  },
   image: {
     width: '100%',
     height: 160
@@ -57,9 +56,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     borderRadius: radius.md,
     overflow: 'hidden'
-  },
-  body: {
-    gap: spacing.xs
   },
   name: {
     color: colors.text,
@@ -74,18 +70,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.small
   },
-  footer: {
-    marginTop: spacing.sm,
-    gap: spacing.sm
-  },
   price: {
     color: colors.accent,
     fontSize: typography.subtitle,
     fontWeight: '700'
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm
   },
   addButton: {
     flex: 1

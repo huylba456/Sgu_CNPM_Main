@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Screen from '../components/Screen';
 import AppHeader from '../components/AppHeader';
@@ -6,7 +6,8 @@ import Chip from '../components/Chip';
 import ProductCard from '../components/ProductCard';
 import EmptyState from '../components/EmptyState';
 import { colors, spacing } from '../styles/theme';
-import { categories, products } from '../data/mockProducts';
+import { useProducts } from '../hooks/useProducts';
+import { useRestaurants } from '../hooks/useRestaurants';
 
 const sortProducts = (list, sortKey) => {
   switch (sortKey) {
@@ -32,15 +33,23 @@ const sortOptions = [
 ];
 
 const ProductsScreen = () => {
+  const { products, categories } = useProducts();
+  const { restaurants } = useRestaurants();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('featured');
   const [category, setCategory] = useState('all');
   const [restaurant, setRestaurant] = useState('all');
 
-  const restaurants = useMemo(
-    () => ['all', ...Array.from(new Set(products.map((product) => product.restaurant)))],
-    []
+  const restaurantOptions = useMemo(
+    () => ['all', ...restaurants.map((item) => item.name)],
+    [restaurants]
   );
+
+  useEffect(() => {
+    if (!restaurantOptions.includes(restaurant)) {
+      setRestaurant('all');
+    }
+  }, [restaurant, restaurantOptions]);
 
   const filteredItems = useMemo(() => {
     let list = products;
@@ -61,7 +70,7 @@ const ProductsScreen = () => {
     }
 
     return sortProducts(list, sort);
-  }, [category, restaurant, search, sort]);
+  }, [category, products, restaurant, search, sort]);
 
   return (
     <Screen>
@@ -90,7 +99,7 @@ const ProductsScreen = () => {
           ))}
         </ScrollView>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-          {restaurants.map((item) => (
+          {restaurantOptions.map((item) => (
             <Chip
               key={item}
               label={item === 'all' ? 'Tất cả nhà hàng' : item}

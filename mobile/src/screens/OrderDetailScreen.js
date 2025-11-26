@@ -6,15 +6,15 @@ import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import { colors, spacing, typography } from '../styles/theme';
 import { useOrders } from '../hooks/useOrders';
-import { statusLabels } from '../data/mockOrders';
-import { restaurants } from '../data/mockRestaurants';
-import { mockRoutes } from '../data/mockRoutes';
+import { statusLabels } from '../constants/statusLabels';
 import { useAuth } from '../hooks/useAuth';
+import { useRestaurants } from '../hooks/useRestaurants';
 
 const OrderDetailScreen = ({ route, navigation }) => {
   const { orderId } = route.params ?? {};
   const { orders, updateOrderStatus } = useOrders();
   const { user } = useAuth();
+  const { restaurants } = useRestaurants();
   const order = orders.find((item) => item.id === orderId);
 
   if (!order) {
@@ -27,12 +27,22 @@ const OrderDetailScreen = ({ route, navigation }) => {
   }
 
   const restaurant = restaurants.find((item) => item.id === order.restaurantId);
-  const routeInfo = mockRoutes.find((item) => item.orderId.replace('#', '') === order.id);
+  const routeInfo = {
+    restaurant: restaurant?.name ?? 'Đang cập nhật',
+    customer: order.customerName ?? 'Khách hàng',
+    points: [
+      { lat: 90, lng: 10 },
+      { lat: 70, lng: 30 },
+      { lat: 55, lng: 45 },
+      { lat: 35, lng: 65 },
+      { lat: 20, lng: 80 }
+    ]
+  };
   const canCancel = user?.role === 'customer' && order.status === 'pending';
   const canAdvance = user && (user.role === 'admin' || user.role === 'restaurant');
 
   const handleCancel = () => {
-    Alert.alert('Hủy đơn hàng', `Bạn có chắc chắn muốn hủy đơn ${order.id}?`, [
+    Alert.alert('Hủy đơn hàng', `Bạn có chắc chắn muốn hủy đơn ${order.code ?? order.id}?`, [
       { text: 'Không', style: 'cancel' },
       {
         text: 'Hủy đơn',
@@ -61,7 +71,7 @@ const OrderDetailScreen = ({ route, navigation }) => {
 
   return (
     <Screen>
-      <AppHeader title={`Đơn hàng ${order.id}`} subtitle={statusLabels[order.status] ?? order.status} />
+      <AppHeader title={`Đơn hàng ${order.code ?? order.id}`} subtitle={statusLabels[order.status] ?? order.status} />
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Thông tin giao hàng</Text>
