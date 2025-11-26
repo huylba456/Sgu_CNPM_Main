@@ -1,216 +1,250 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import DataTable from '../../components/DataTable.jsx';
 import Modal from '../../components/Modal.jsx';
-import StatsCard from '../../components/StatsCard.jsx';
-import { drones as seedDrones } from '../../data/mockDrones.js';
+import { useData } from '../../hooks/useData.js';
 
-const createEmptyForm = () => ({
-  id: '',
-  status: 'Hoạt động',
-  battery: 100,
-  dailyDeliveries: 0,
-  totalDeliveries: 0,
-  distance: 0
-});
+const droneStatusOptions = ['Hoạt động', 'Đang bảo trì', 'Đang sạc', 'Không khả dụng'];
 
 const AdminDronesPage = () => {
-  const [drones, setDrones] = useState(seedDrones);
-  const [form, setForm] = useState(createEmptyForm);
-  const [editingId, setEditingId] = useState(null);
+  const { drones, addDrone, updateDrone, deleteDrone } = useData();
+  const [droneForm, setDroneForm] = useState({
+    code: '',
+    status: 'Hoạt động',
+    battery: 100,
+    dailyDeliveries: 0,
+    totalDeliveries: 0,
+    distance: 0
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDroneId, setEditingDroneId] = useState(null);
   const [droneToDelete, setDroneToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('code');
+  const [sortDirection, setSortDirection] = useState('asc');
 
-  const statusOptions = useMemo(
-    () => ['Hoạt động', 'Đang bảo trì', 'Đang sạc', 'Không khả dụng'],
-    []
-  );
+  useEffect(() => {
+    if (editingDroneId) return;
+    setDroneForm({
+      code: '',
+      status: 'Hoạt động',
+      battery: 100,
+      dailyDeliveries: 0,
+      totalDeliveries: 0,
+      distance: 0
+    });
+  }, [editingDroneId]);
 
-  const openCreate = () => {
-    setForm(createEmptyForm());
-    setEditingId(null);
-    setIsModalOpen(true);
+  const filteredDrones = useMemo(() => {
+    const keyword = searchTerm.toLowerCase();
+    return drones
+      .filter((drone) =>
+        !keyword
+          ? true
+          : (drone.code ?? drone.id).toLowerCase().includes(keyword) || drone.status.toLowerCase().includes(keyword)
+      )
+      .sort((a, b) => {
+        const direction = sortDirection === 'asc' ? 1 : -1;
+        if (sortBy === 'code') return (a.code ?? a.id).localeCompare(b.code ?? b.id) * direction;
+        if (sortBy === 'battery') return (a.battery - b.battery) * direction;
+        if (sortBy === 'dailyDeliveries') return (a.dailyDeliveries - b.dailyDeliveries) * direction;
+        if (sortBy === 'totalDeliveries') return (a.totalDeliveries - b.totalDeliveries) * direction;
+        if (sortBy === 'distance') return (a.distance - b.distance) * direction;
+        return a.id.localeCompare(b.id) * direction;
+      });
+  }, [drones, searchTerm, sortBy, sortDirection]);
+
+  const handleDroneChange = (event) => {
+    const { name, value } = event.target;
+    setDroneForm((prev) => ({
+      ...prev,
+      [name]: name === 'battery' || name.includes('Deliveries') || name === 'distance' ? Number(value) : value
+    }));
   };
 
-  const openEdit = (drone) => {
-    setForm({ ...drone });
-    setEditingId(drone.id);
-    setIsModalOpen(true);
+  const handleDroneSubmit = async (event) => {
+    event.preventDefault();
+    if (editingDroneId) {
+      await updateDrone(editingDroneId, { ...droneForm });
+    } else {
+      await addDrone({ ...droneForm });
+    }
+    closeModal();
+  };
+
+  const confirmDeleteDrone = (drone) => setDroneToDelete(drone);
+
+  const handleDeleteDrone = async () => {
+    if (!droneToDelete) return;
+    await deleteDrone(droneToDelete.id);
+    setDroneToDelete(null);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingId(null);
-    setForm(createEmptyForm());
+    setEditingDroneId(null);
   };
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === 'status' || name === 'id' ? value : Number(value)
-    }));
+  const columns = useMemo(
+    () => [
+      { header: 'Mã drone', accessorKey: 'code' },
+      { header: 'ID Firestore', accessorKey: 'id' },
+      { header: 'Tình trạng', accessorKey: 'status' },
+      { header: 'Pin (%)', accessorKey: 'battery' },
+      { header: 'Đơn hôm nay', accessorKey: 'dailyDeliveries' },
+      { header: 'Tổng đơn', accessorKey: 'totalDeliveries' },
+      { header: 'Quãng đường (km)', accessorKey: 'distance' },
+      {
+        header: 'Hành động',
+        cell: ({ row }) => (
+          <div className="table-actions">
+            <button type="button" onClick={() => openEditDrone(row.original)}>Sửa</button>
+            <button type="button" className="danger" onClick={() => confirmDeleteDrone(row.original)}>
+              Xoá
+            </button>
+          </div>
+        )
+      }
+    ],
+    [drones]
+  );
+
+  const openCreateDrone = () => {
+    setDroneForm({
+      code: '',
+      status: 'Hoạt động',
+      battery: 100,
+      dailyDeliveries: 0,
+      totalDeliveries: 0,
+      distance: 0
+    });
+    setEditingDroneId(null);
+    setIsModalOpen(true);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const payload = {
-      ...form,
-      id: form.id.trim(),
-      battery: Number(form.battery),
-      dailyDeliveries: Number(form.dailyDeliveries),
-      totalDeliveries: Number(form.totalDeliveries),
-      distance: Number(form.distance)
-    };
-
-    if (!payload.id) {
-      return;
-    }
-
-    if (editingId) {
-      setDrones((prev) => prev.map((item) => (item.id === editingId ? { ...payload } : item)));
-    } else {
-      setDrones((prev) => [...prev, payload]);
-    }
-
-    closeModal();
-  };
-
-  const confirmDelete = (drone) => {
-    setDroneToDelete(drone);
-  };
-
-  const handleDelete = () => {
-    if (!droneToDelete) return;
-    const deletedId = droneToDelete.id;
-    setDrones((prev) => prev.filter((item) => item.id !== deletedId));
-    if (editingId === deletedId) {
-      setIsModalOpen(false);
-      setEditingId(null);
-      setForm(createEmptyForm());
-    }
-    setDroneToDelete(null);
+  const openEditDrone = (drone) => {
+    setEditingDroneId(drone.id);
+    setDroneForm({ ...drone, code: drone.code ?? drone.id });
+    setIsModalOpen(true);
   };
 
   const totalActive = drones.filter((drone) => drone.status === 'Hoạt động').length;
-  const averageBattery = Math.round(
-    drones.reduce((sum, drone) => sum + drone.battery, 0) / Math.max(1, drones.length)
-  );
-  const totalDistance = drones.reduce((sum, drone) => sum + drone.distance, 0);
+  const totalBattery =
+    drones.reduce((sum, drone) => sum + (Number.isFinite(drone.battery) ? drone.battery : 0), 0) /
+    Math.max(1, drones.length);
+  const totalDistance = drones.reduce((sum, drone) => sum + (drone.distance ?? 0), 0);
 
   return (
     <div className="page dashboard">
-      <h2>Quản lý đội drone</h2>
-      <p className="muted">Theo dõi tình trạng đội drone và cập nhật lịch trình vận hành.</p>
-      <div className="stat-grid">
-        <StatsCard title="Tổng drone" value={drones.length} trend={`${totalActive} đang hoạt động`} />
-        <StatsCard title="Pin trung bình" value={`${averageBattery}%`} trend="Mức pin hiện tại" />
-        <StatsCard title="Quãng đường" value={`${totalDistance} km`} trend="Đã di chuyển toàn đội" />
-      </div>
+      <h2>Đội drone</h2>
       <div className="toolbar">
-        <button type="button" className="primary" onClick={openCreate}>
+        <input
+          type="search"
+          placeholder="Tìm theo mã drone hoặc trạng thái"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
+        <div className="toolbar-group">
+          <label>
+            Sắp xếp
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+              <option value="code">Mã</option>
+              <option value="battery">Pin</option>
+              <option value="dailyDeliveries">Đơn hôm nay</option>
+              <option value="totalDeliveries">Tổng đơn</option>
+              <option value="distance">Quãng đường</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))}>
+            {sortDirection === 'asc' ? 'Tăng dần' : 'Giảm dần'}
+          </button>
+        </div>
+        <button type="button" className="primary" onClick={openCreateDrone}>
           Thêm drone
         </button>
       </div>
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Mã drone</th>
-              <th>Tình trạng</th>
-              <th>Pin (%)</th>
-              <th>Đơn hôm nay</th>
-              <th>Tổng đơn</th>
-              <th>Quãng đường (km)</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {drones.map((drone) => (
-              <tr key={drone.id}>
-                <td>{drone.id}</td>
-                <td>{drone.status}</td>
-                <td>{drone.battery}%</td>
-                <td>{drone.dailyDeliveries}</td>
-                <td>{drone.totalDeliveries}</td>
-                <td>{drone.distance} km</td>
-                <td>
-                  <div className="table-actions">
-                    <button type="button" onClick={() => openEdit(drone)}>
-                      Sửa
-                    </button>
-                    <button type="button" className="danger" onClick={() => confirmDelete(drone)}>
-                      Xoá
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <div className="stat-grid">
+        <div className="stat-card">
+          <p>Tổng drone</p>
+          <h3>{drones.length}</h3>
+        </div>
+        <div className="stat-card">
+          <p>Đang hoạt động</p>
+          <h3>{totalActive}</h3>
+        </div>
+        <div className="stat-card">
+          <p>Pin trung bình</p>
+          <h3>{Math.round(totalBattery)}%</h3>
+        </div>
+        <div className="stat-card">
+          <p>Tổng quãng đường</p>
+          <h3>{totalDistance} km</h3>
+        </div>
       </div>
+
+      <DataTable columns={columns} data={filteredDrones} />
+
       {isModalOpen && (
-        <Modal title={editingId ? 'Cập nhật drone' : 'Thêm drone mới'} onClose={closeModal}>
-          <form className="form" onSubmit={handleSubmit}>
-            <div className="grid two form-grid">
-              <label className="form-field">
+        <Modal title={editingDroneId ? 'Cập nhật drone' : 'Thêm drone mới'} onClose={closeModal}>
+          <form className="form" onSubmit={handleDroneSubmit}>
+            <div className="grid two">
+              <label>
                 Mã drone
-                <input name="id" value={form.id} onChange={handleChange} required />
+                <input name="code" value={droneForm.code} onChange={handleDroneChange} required />
               </label>
-              <label className="form-field">
+              <label>
                 Tình trạng
-                <select name="status" value={form.status} onChange={handleChange}>
-                  {statusOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                <select name="status" value={droneForm.status} onChange={handleDroneChange}>
+                  {droneStatusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
                     </option>
                   ))}
                 </select>
               </label>
-              <label className="form-field">
+              <label>
                 Pin (%)
                 <input
                   type="number"
                   name="battery"
-                  value={form.battery}
+                  value={droneForm.battery}
                   min="0"
                   max="100"
-                  onChange={handleChange}
+                  onChange={handleDroneChange}
                   required
                 />
               </label>
-              <label className="form-field">
+              <label>
                 Đơn hôm nay
                 <input
                   type="number"
                   name="dailyDeliveries"
-                  value={form.dailyDeliveries}
-                  onChange={handleChange}
+                  value={droneForm.dailyDeliveries}
+                  onChange={handleDroneChange}
                   min="0"
                   required
-                  disabled={Boolean(editingId)}
                 />
               </label>
-              <label className="form-field">
+              <label>
                 Tổng đơn
                 <input
                   type="number"
                   name="totalDeliveries"
-                  value={form.totalDeliveries}
-                  onChange={handleChange}
+                  value={droneForm.totalDeliveries}
+                  onChange={handleDroneChange}
                   min="0"
                   required
-                  disabled={Boolean(editingId)}
                 />
               </label>
-              <label className="form-field">
+              <label>
                 Quãng đường (km)
                 <input
                   type="number"
                   name="distance"
-                  value={form.distance}
-                  onChange={handleChange}
+                  value={droneForm.distance}
+                  onChange={handleDroneChange}
                   min="0"
                   required
-                  disabled={Boolean(editingId)}
                 />
               </label>
             </div>
@@ -219,12 +253,13 @@ const AdminDronesPage = () => {
                 Hủy
               </button>
               <button type="submit" className="primary">
-                {editingId ? 'Lưu thay đổi' : 'Thêm drone'}
+                {editingDroneId ? 'Lưu thay đổi' : 'Thêm drone'}
               </button>
             </div>
           </form>
         </Modal>
       )}
+
       {droneToDelete && (
         <Modal title="Xóa drone" onClose={() => setDroneToDelete(null)}>
           <p>
@@ -234,7 +269,7 @@ const AdminDronesPage = () => {
             <button type="button" className="ghost-button" onClick={() => setDroneToDelete(null)}>
               Không
             </button>
-            <button type="button" className="danger" onClick={handleDelete}>
+            <button type="button" className="danger" onClick={handleDeleteDrone}>
               Có, xóa drone
             </button>
           </div>

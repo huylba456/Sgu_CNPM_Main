@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DataTable from '../../components/DataTable.jsx';
-import { initialOrders } from '../../data/mockOrders.js';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useData } from '../../hooks/useData.js';
+import { useRestaurants } from '../../hooks/useRestaurants.js';
 
 const statuses = [
   { value: 'pending', label: 'Chờ xác nhận' },
@@ -13,9 +14,16 @@ const statuses = [
 
 const RestaurantOrdersPage = () => {
   const { user } = useAuth();
-  const [orders, setOrders] = useState(
-    initialOrders.filter((order) => order.restaurantId === (user?.restaurantId ?? 'r1'))
-  );
+  const { orders: allOrders, updateOrder } = useData();
+  const { restaurants } = useRestaurants();
+  const restaurantId = useMemo(() => {
+    if (user?.restaurantId) return user.restaurantId;
+    if (user?.restaurantName) {
+      return restaurants.find((item) => item.name === user.restaurantName)?.id ?? '';
+    }
+    return '';
+  }, [restaurants, user?.restaurantId, user?.restaurantName]);
+  const [orders, setOrders] = useState([]);
 
   const columns = useMemo(
     () => [
@@ -53,17 +61,24 @@ const RestaurantOrdersPage = () => {
     [orders]
   );
 
-  const handleStatusChange = (id, status) => {
-    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, status } : order)));
-  };
+  const handleStatusChange = (id, status) => updateOrder(id, { status });
 
-  const handleNoteChange = (id, note) => {
-    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, note } : order)));
-  };
+  const handleNoteChange = (id, note) => updateOrder(id, { note });
+
+  useEffect(() => {
+    if (!restaurantId) {
+      setOrders([]);
+      return;
+    }
+    setOrders(allOrders.filter((order) => order.restaurantId === restaurantId));
+  }, [allOrders, restaurantId]);
 
   return (
     <div className="page dashboard">
       <h2>Đơn hàng của nhà hàng</h2>
+      {!restaurantId ? (
+        <div className="alert warning">Tài khoản chưa được gán nhà hàng. Vui lòng liên hệ quản trị.</div>
+      ) : null}
       <DataTable columns={columns} data={orders} />
     </div>
   );

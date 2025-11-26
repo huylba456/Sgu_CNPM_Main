@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
-import { products } from '../data/mockProducts.js';
+import { useData } from '../hooks/useData.js';
 
 const HomePage = () => {
+  const { products } = useData();
   const highlightedProducts = useMemo(
     () =>
       [...products]

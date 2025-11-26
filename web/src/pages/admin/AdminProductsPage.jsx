@@ -1,22 +1,45 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import DataTable from '../../components/DataTable.jsx';
-import { products as seedProducts, categories } from '../../data/mockProducts.js';
 import Modal from '../../components/Modal.jsx';
+import { useData } from '../../hooks/useData.js';
+import { useRestaurants } from '../../hooks/useRestaurants.js';
 
 const AdminProductsPage = () => {
-  const [products, setProducts] = useState(seedProducts);
+  const { products, categories, addProduct, updateProduct, deleteProduct } = useData();
+  const { restaurants } = useRestaurants();
   const [form, setForm] = useState({
     id: '',
     name: '',
     category: categories[0],
     price: 0,
-    restaurant: '',
+    restaurant: restaurants[0]?.name ?? '',
     description: '',
     image: ''
   });
   const [editingId, setEditingId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+
+  const filteredProducts = useMemo(() => {
+    const keyword = searchTerm.toLowerCase();
+    return products
+      .filter(
+        (product) =>
+          !keyword ||
+          product.name.toLowerCase().includes(keyword) ||
+          product.restaurant.toLowerCase().includes(keyword)
+      )
+      .sort((a, b) => {
+        const direction = sortDirection === 'asc' ? 1 : -1;
+        if (sortBy === 'name') return a.name.localeCompare(b.name) * direction;
+        if (sortBy === 'price') return (a.price - b.price) * direction;
+        if (sortBy === 'category') return a.category.localeCompare(b.category) * direction;
+        return 0;
+      });
+  }, [products, searchTerm, sortBy, sortDirection]);
 
   const columns = useMemo(
     () => [
@@ -58,26 +81,26 @@ const AdminProductsPage = () => {
     event.preventDefault();
     const payload = { ...form, price: Number(form.price) };
     if (editingId) {
-      setProducts((prev) => prev.map((item) => (item.id === editingId ? { ...payload, id: item.id } : item)));
+      updateProduct(editingId, payload);
     } else {
-      setProducts((prev) => [...prev, { ...payload, id: crypto.randomUUID() }]);
+      addProduct(payload);
     }
     closeModal();
   };
 
-  const handleEdit = (product) => {
+  function handleEdit(product) {
     setForm({ ...product });
     setEditingId(product.id);
     setIsModalOpen(true);
-  };
+  }
 
-  const promptDelete = (product) => {
+  function promptDelete(product) {
     setProductToDelete(product);
-  };
+  }
 
   const handleDelete = () => {
     if (!productToDelete) return;
-    setProducts((prev) => prev.filter((item) => item.id !== productToDelete.id));
+    deleteProduct(productToDelete.id);
     if (editingId === productToDelete.id) {
       setEditingId(null);
       resetForm();
@@ -86,7 +109,19 @@ const AdminProductsPage = () => {
   };
 
   const resetForm = () =>
-    setForm({ id: '', name: '', category: categories[0], price: 0, restaurant: '', description: '', image: '' });
+    setForm({
+      id: '',
+      name: '',
+      category: categories[0],
+      price: 0,
+      restaurant: restaurants[0]?.name ?? '',
+      description: '',
+      image: ''
+    });
+
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, restaurant: prev.restaurant || restaurants[0]?.name || '' }));
+  }, [restaurants]);
 
   const closeModal = () => {
     resetForm();
@@ -103,11 +138,30 @@ const AdminProductsPage = () => {
     <div className="page dashboard">
       <h2>Quản lý sản phẩm</h2>
       <div className="toolbar">
+        <input
+          type="search"
+          placeholder="Tìm theo tên món hoặc nhà hàng"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
+        <div className="toolbar-group">
+          <label>
+            Sắp xếp
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+              <option value="name">Tên món</option>
+              <option value="price">Giá</option>
+              <option value="category">Danh mục</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))}>
+            {sortDirection === 'asc' ? 'Tăng dần' : 'Giảm dần'}
+          </button>
+        </div>
         <button type="button" className="primary" onClick={handleCreate}>
           Thêm món mới
         </button>
       </div>
-      <DataTable columns={columns} data={products} />
+      <DataTable columns={columns} data={filteredProducts} />
       {isModalOpen && (
         <Modal title={editingId ? 'Cập nhật món' : 'Thêm món mới'} onClose={closeModal}>
           <form className="form" onSubmit={handleSubmit}>
@@ -132,7 +186,13 @@ const AdminProductsPage = () => {
               </label>
               <label className="form-field">
                 Nhà hàng
-                <input name="restaurant" value={form.restaurant} onChange={handleChange} required />
+                <select name="restaurant" value={form.restaurant} onChange={handleChange} required>
+                  {restaurants.map((restaurant) => (
+                    <option key={restaurant.id} value={restaurant.name}>
+                      {restaurant.name}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
             <label className="form-field">

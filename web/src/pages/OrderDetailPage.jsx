@@ -6,8 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { initialOrders } from '../data/mockOrders.js';
-import { restaurants } from '../data/mockRestaurants.js';
+import { useRestaurants } from '../hooks/useRestaurants.js';
+import { useData } from '../hooks/useData.js';
 
 const statusLabels = {
   pending: 'Chờ xác nhận',
@@ -101,10 +101,12 @@ const AnimatedDrone = ({ start, end, onArrive, isActive }) => {
 const OrderDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const order = useMemo(() => initialOrders.find((item) => item.id === id), [id]);
+  const { orders } = useData();
+  const order = useMemo(() => orders.find((item) => item.id === id), [id, orders]);
+  const { restaurants } = useRestaurants();
   const restaurant = useMemo(
     () => (order ? restaurants.find((item) => item.id === order.restaurantId) : undefined),
-    [order]
+    [order, restaurants]
   );
   const [status, setStatus] = useState(order?.status ?? 'pending');
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -118,7 +120,9 @@ const OrderDetailPage = () => {
     ? coordinatesByAddress[restaurant?.address] ?? defaultPosition
     : defaultPosition;
   const deliveryPosition = order
-    ? coordinatesByAddress[order.deliveryAddress ?? order.customerAddress] ?? defaultPosition
+    ? order.deliveryCoordinates ??
+      coordinatesByAddress[order.deliveryAddress ?? order.customerAddress] ??
+      defaultPosition
     : defaultPosition;
 
   const handleCancelOrder = useCallback(() => {
@@ -152,9 +156,9 @@ const OrderDetailPage = () => {
           <button type="button" className="ghost-button" onClick={() => navigate(-1)}>
             ← Trở lại
           </button>
-          <span>Đơn hàng {order.id}</span>
+          <span>Đơn hàng {order.code ?? order.id}</span>
         </div>
-        <h2>Đơn hàng {order.id}</h2>
+        <h2>Đơn hàng {order.code ?? order.id}</h2>
         <span className={`status ${status}`}>{statusLabels[status]}</span>
       </header>
 

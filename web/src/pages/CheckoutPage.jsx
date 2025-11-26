@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../hooks/useCart.js';
-import { useAuth } from '../hooks/useAuth.js';
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { useCart } from '../hooks/useCart.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { useData } from '../hooks/useData.js';
 
 const paymentMethods = ['Ví FoodFast Pay', 'Thẻ tín dụng', 'Chuyển khoản'];
+const defaultLandingPosition = { lat: 10.762622, lng: 106.660172 };
+const vietnamSuffix = 'Việt Nam';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -18,50 +21,56 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow
 });
 
-const defaultLandingPosition = { lat: 10.762622, lng: 106.660172 };
-
-const MapUpdater = ({ position }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    map.invalidateSize();
-    map.flyTo(position, map.getZoom(), { duration: 0.4 });
-  }, [map, position]);
-
-  return null;
+const ensureVietnamSuffix = (address) => {
+  const trimmed = address.trim();
+  if (!trimmed) return vietnamSuffix;
+  return trimmed.toLowerCase().endsWith(vietnamSuffix.toLowerCase()) ? trimmed : `${trimmed} ${vietnamSuffix}`;
 };
 
-const MapClickHandler = ({ onClick }) => {
-  useMapEvents({
-    click: (event) => {
-      onClick(event.latlng);
-    }
-  });
-
-  return null;
+const removeVietnamSuffix = (address) => {
+  const trimmed = address.trim();
+  if (trimmed.toLowerCase().endsWith(vietnamSuffix.toLowerCase())) {
+    return trimmed.slice(0, -vietnamSuffix.length).trim();
+  }
+  return trimmed;
 };
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
   const { user } = useAuth();
+  const { addOrder } = useData();
   const navigate = useNavigate();
+  const [recipientName, setRecipientName] = useState(user?.name ?? '');
+  const [recipientEmail, setRecipientEmail] = useState(user?.email ?? '');
+  const [recipientPhone, setRecipientPhone] = useState(user?.phone ?? '');
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0]);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [landingAddress, setLandingAddress] = useState(user?.address ?? '');
+  const [addressInput, setAddressInput] = useState(removeVietnamSuffix(user?.address ?? ''));
+  const [landingAddress, setLandingAddress] = useState(ensureVietnamSuffix(user?.address ?? ''));
   const [landingPosition, setLandingPosition] = useState(defaultLandingPosition);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState('');
+  const [shouldForwardGeocode, setShouldForwardGeocode] = useState(true);
   const orsApiKey = import.meta.env.VITE_ORS_API_KEY;
   const total = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
 
   useEffect(() => {
-    setLandingAddress(user?.address ?? '');
+    setAddressInput(removeVietnamSuffix(user?.address ?? ''));
+    setLandingAddress(ensureVietnamSuffix(user?.address ?? ''));
+    setRecipientName(user?.name ?? '');
+    setRecipientEmail(user?.email ?? '');
+    setRecipientPhone(user?.phone ?? '');
+    setShouldForwardGeocode(true);
   }, [user]);
 
   useEffect(() => {
-    if (!orsApiKey || !landingAddress.trim()) {
+    if (!shouldForwardGeocode || !landingAddress.trim()) {
+      setGeocodeError('');
+      return undefined;
+    }
+
+    if (!orsApiKey) {
       setGeocodeError('');
       return undefined;
     }
@@ -74,7 +83,8 @@ const CheckoutPage = () => {
         const params = new URLSearchParams({
           api_key: orsApiKey,
           text: landingAddress,
-          size: '1'
+          size: '1',
+          'boundary.country': 'VNM'
         });
         const response = await fetch(`https://api.openrouteservice.org/geocode/search?${params.toString()}`, {
           signal: controller.signal
@@ -106,47 +116,75 @@ const CheckoutPage = () => {
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [landingAddress, orsApiKey]);
+  }, [landingAddress, orsApiKey, shouldForwardGeocode]);
 
-  const handleMapClick = useCallback(
-    async ({ lat, lng }) => {
-      if (!orsApiKey) {
-        return;
-      }
+  const handleAddressChange = (event) => {
+    const value = event.target.value;
+    setAddressInput(value);
+    setLandingAddress(ensureVietnamSuffix(value));
+    setShouldForwardGeocode(true);
+  };
 
-      setLandingPosition({ lat, lng });
-      setIsReverseGeocoding(true);
+  const reverseGeocodePosition = async (position) => {
+    if (!orsApiKey) {
+      setGeocodeError('Chưa cấu hình khóa API OpenRouteService để xác định địa chỉ từ vị trí.');
+      return;
+    }
+
+    try {
+      setIsGeocoding(true);
       setGeocodeError('');
+      const params = new URLSearchParams({
+        api_key: orsApiKey,
+        'point.lon': position.lng,
+        'point.lat': position.lat,
+        size: '1',
+        'boundary.country': 'VNM'
+      });
+      const response = await fetch(`https://api.openrouteservice.org/geocode/reverse?${params.toString()}`);
 
-      try {
-        const params = new URLSearchParams({
-          api_key: orsApiKey,
-          'point.lat': lat,
-          'point.lon': lng,
-          size: '1'
-        });
-        const response = await fetch(`https://api.openrouteservice.org/geocode/reverse?${params.toString()}`);
-
-        if (!response.ok) {
-          throw new Error('Reverse geocode failed');
-        }
-
-        const data = await response.json();
-        const label = data?.features?.[0]?.properties?.label;
-
-        if (label) {
-          setLandingAddress(label);
-        } else {
-          setGeocodeError('Không thể xác định địa chỉ từ vị trí đã chọn.');
-        }
-      } catch (error) {
-        setGeocodeError('Không thể xác định địa chỉ từ vị trí đã chọn.');
-      } finally {
-        setIsReverseGeocoding(false);
+      if (!response.ok) {
+        throw new Error('Reverse geocode request failed');
       }
-    },
-    [orsApiKey]
-  );
+
+      const data = await response.json();
+      const feature = data?.features?.[0];
+      const label = feature?.properties?.label ?? '';
+      const displayAddress = removeVietnamSuffix(label) || `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+      setAddressInput(displayAddress);
+      setLandingAddress(ensureVietnamSuffix(displayAddress));
+    } catch (error) {
+      setGeocodeError('Không thể lấy địa chỉ từ vị trí vừa chọn.');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  const handleMapClick = async (latlng) => {
+    setShouldForwardGeocode(false);
+    setLandingPosition(latlng);
+    await reverseGeocodePosition(latlng);
+  };
+
+  const MapPositionUpdater = ({ position }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      map.setView(position, map.getZoom());
+    }, [map, position]);
+
+    return null;
+  };
+
+  const ClickableMarker = ({ position, onSelect }) => {
+    useMapEvents({
+      click: (event) => {
+        onSelect({ lat: event.latlng.lat, lng: event.latlng.lng });
+      }
+    });
+
+    return <Marker position={position} />;
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -154,6 +192,17 @@ const CheckoutPage = () => {
   };
 
   const handleConfirmPayment = () => {
+    addOrder({
+      customerName: recipientName || user?.name || 'Khách hàng mới',
+      customerEmail: recipientEmail || user?.email || 'unknown@foodfast.io',
+      customerAddress: landingAddress,
+      deliveryAddress: landingAddress,
+      deliveryCoordinates: landingPosition,
+      paymentMethod,
+      items: cartItems,
+      total,
+      note
+    });
     setIsConfirming(false);
     clearCart();
     navigate('/orders', {
@@ -183,39 +232,37 @@ const CheckoutPage = () => {
           <legend>Thông tin nhận hàng</legend>
           <label className="form-field">
             Tên người nhận
-            <input type="text" defaultValue={user?.name ?? ''} required />
+            <input type="text" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} required />
           </label>
           <label className="form-field">
             Email
-            <input type="email" defaultValue={user?.email ?? ''} required />
+            <input type="email" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} required />
           </label>
           <label className="form-field">
             Số điện thoại
-            <input type="tel" defaultValue={user?.phone ?? ''} required />
+            <input type="tel" value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} required />
           </label>
           <label className="form-field">
             Địa chỉ drone hạ cánh
-            <input type="text" value={landingAddress} onChange={(event) => setLandingAddress(event.target.value)} required />
+            <input type="text" value={addressInput} onChange={handleAddressChange} required />
           </label>
           <div className="map-field">
-            {orsApiKey ? (
-              <>
-                <MapContainer center={landingPosition} zoom={16} scrollWheelZoom={false} className="map-preview">
-                  <TileLayer
-                    attribution="&copy; OpenStreetMap contributors"
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  <Marker position={landingPosition} />
-                  <MapUpdater position={landingPosition} />
-                  <MapClickHandler onClick={handleMapClick} />
-                </MapContainer>
-                <p className="form-hint">Chạm vào bản đồ để chọn vị trí mới hoặc nhập địa chỉ để đồng bộ.</p>
-                {(isGeocoding || isReverseGeocoding) && <p className="form-hint">Đang đồng bộ với bản đồ...</p>}
-                {geocodeError && <p className="form-hint error">{geocodeError}</p>}
-              </>
-            ) : (
-              <p className="form-hint error">Chưa cấu hình khóa API OpenRouteService. Thêm biến VITE_ORS_API_KEY để hiển thị bản đồ.</p>
+            <MapContainer
+              center={landingPosition}
+              zoom={15}
+              style={{ height: 300, width: '100%', margin: '20px 0', borderRadius: '10px' }}
+              scrollWheelZoom
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <MapPositionUpdater position={landingPosition} />
+              <ClickableMarker position={landingPosition} onSelect={handleMapClick} />
+            </MapContainer>
+            <p className="form-hint">Chạm vào bản đồ để chọn vị trí hạ cánh và đồng bộ với địa chỉ.</p>
+            {isGeocoding && <p className="form-hint">Đang xác định tọa độ chính xác...</p>}
+            {!orsApiKey && (
+              <p className="form-hint error">Chưa cấu hình khóa API OpenRouteService. Thêm biến VITE_ORS_API_KEY để lấy tọa độ chính xác.</p>
             )}
+            {geocodeError && <p className="form-hint error">{geocodeError}</p>}
           </div>
         </fieldset>
         <fieldset className="form-section">
@@ -223,11 +270,11 @@ const CheckoutPage = () => {
           <label className="form-field">
             Phương thức
             <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
-            {paymentMethods.map((method) => (
-              <option key={method} value={method}>
-                {method}
-              </option>
-            ))}
+              {paymentMethods.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
             </select>
           </label>
           <label className="form-field">

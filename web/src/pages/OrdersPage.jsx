@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { initialOrders } from '../data/mockOrders.js';
 import StatsCard from '../components/StatsCard.jsx';
 import { useAuth } from '../hooks/useAuth.js';
+import { useData } from '../hooks/useData.js';
 
 const statusLabels = {
   pending: 'Chờ xác nhận',
@@ -13,7 +13,7 @@ const statusLabels = {
 };
 
 const OrdersPage = () => {
-  const [orders, setOrders] = useState(initialOrders);
+  const { orders, updateOrder } = useData();
   const [orderToCancel, setOrderToCancel] = useState(null);
   const location = useLocation();
   const { user } = useAuth();
@@ -54,11 +54,7 @@ const OrdersPage = () => {
 
   const handleConfirmCancel = () => {
     if (!orderToCancel) return;
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderToCancel.id ? { ...order, status: 'cancelled' } : order
-      )
-    );
+    updateOrder(orderToCancel.id, { status: 'cancelled' });
     setOrderToCancel(null);
   };
 
@@ -84,7 +80,7 @@ const OrdersPage = () => {
           visibleOrders.map((order) => (
             <article key={order.id} className="order-card">
               <header>
-                <h3>Đơn {order.id}</h3>
+                <h3>Đơn {order.code ?? order.id}</h3>
                 <span className={`status ${order.status}`}>{statusLabels[order.status]}</span>
               </header>
               <div className="order-meta">
@@ -132,7 +128,7 @@ const OrdersPage = () => {
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal">
             <h3>Xác nhận hủy đơn hàng</h3>
-            <p>Bạn có chắc chắn muốn hủy đơn {orderToCancel.id} không?</p>
+            <p>Bạn có chắc chắn muốn hủy đơn {orderToCancel.code ?? orderToCancel.id} không?</p>
             <div className="modal-actions">
               <button type="button" className="ghost-button" onClick={handleDismissModal}>
                 Không

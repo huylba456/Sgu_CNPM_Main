@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { products } from '../data/mockProducts.js';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { useData } from '../hooks/useData.js';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { products } = useData();
   const isGuest = !user;
-  const product = useMemo(() => products.find((item) => item.id === id), [id]);
+  const product = useMemo(() => products.find((item) => item.id === id), [id, products]);
 
   if (!product) {
     return (

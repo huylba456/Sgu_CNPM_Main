@@ -1,32 +1,55 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { initialOrders } from '../data/mockOrders.js';
-
-const statusLabels = {
-  pending: 'Chờ xác nhận',
-  preparing: 'Đang chuẩn bị',
-  shipping: 'Đang giao',
-  delivered: 'Đã giao',
-  cancelled: 'Hủy'
-};
+import { useData } from '../hooks/useData.js';
 
 const CustomerProfilePage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const { orders } = useData();
+  const [form, setForm] = useState({ name: '', phone: '', address: '' });
+  const [saveMessage, setSaveMessage] = useState('');
 
   const { customerOrders, totalPaid, deliveredCount } = useMemo(() => {
     if (!user) {
       return { customerOrders: [], totalPaid: 0, deliveredCount: 0 };
     }
 
-    const orders = initialOrders.filter((order) => order.customerEmail === user.email);
-    const total = orders
+    const customerOrders = orders.filter((order) => order.customerEmail === user.email);
+    const total = customerOrders
       .filter((order) => order.status !== 'cancelled')
       .reduce((sum, order) => sum + order.total, 0);
-    const delivered = orders.filter((order) => order.status === 'delivered').length;
+    const delivered = customerOrders.filter((order) => order.status === 'delivered').length;
 
-    return { customerOrders: orders, totalPaid: total, deliveredCount: delivered };
+    return { customerOrders, totalPaid: total, deliveredCount: delivered };
+  }, [orders, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setForm({
+      name: user.name ?? '',
+      phone: user.phone ?? '',
+      address: user.address ?? ''
+    });
   }, [user]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!user) return;
+
+    const trimmed = {
+      name: form.name.trim() || user.name,
+      phone: form.phone.trim(),
+      address: form.address.trim()
+    };
+
+    updateUser(user.id, trimmed);
+    setSaveMessage('Đã lưu thông tin của bạn.');
+  };
 
   if (!user) {
     return (
@@ -46,30 +69,36 @@ const CustomerProfilePage = () => {
     <div className="page">
       <header className="page-header">
         <h2>Hồ sơ khách hàng</h2>
-        <p className="muted">Quản lý thông tin cá nhân và lịch sử thanh toán của bạn.</p>
+        <p className="muted">Quản lý thông tin cá nhân và tổng quan thanh toán của bạn.</p>
       </header>
 
       <section className="profile-summary">
         <div className="profile-card">
           <h3>Thông tin cá nhân</h3>
-          <dl>
-            <div>
-              <dt>Họ và tên</dt>
-              <dd>{user.name}</dd>
+          <form className="form" onSubmit={handleSubmit}>
+            <label className="form-field">
+              Họ và tên
+              <input name="name" value={form.name} onChange={handleChange} required />
+            </label>
+            <label className="form-field">
+              Email
+              <input value={user.email} disabled />
+            </label>
+            <label className="form-field">
+              Số điện thoại
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="Nhập số điện thoại" />
+            </label>
+            <label className="form-field">
+              Địa chỉ
+              <input name="address" value={form.address} onChange={handleChange} placeholder="Nhập địa chỉ giao hàng" />
+            </label>
+            {saveMessage ? <p className="muted small">{saveMessage}</p> : null}
+            <div className="actions">
+              <button type="submit" className="primary-button">
+                Lưu thay đổi
+              </button>
             </div>
-            <div>
-              <dt>Email</dt>
-              <dd>{user.email}</dd>
-            </div>
-            <div>
-              <dt>Số điện thoại</dt>
-              <dd>{user.phone || 'Chưa cập nhật'}</dd>
-            </div>
-            <div>
-              <dt>Địa chỉ</dt>
-              <dd>{user.address || 'Chưa cập nhật'}</dd>
-            </div>
-          </dl>
+          </form>
         </div>
 
         <div className="profile-card highlights">
@@ -90,46 +119,7 @@ const CustomerProfilePage = () => {
           </ul>
         </div>
       </section>
-
-      <section className="profile-orders">
-        <h3>Lịch sử đơn hàng</h3>
-        {customerOrders.length === 0 ? (
-          <p className="muted">Bạn chưa có đơn hàng nào.</p>
-        ) : (
-          <div className="order-history">
-            {customerOrders.map((order) => (
-              <article key={order.id} className="order-history-card">
-                <header>
-                  <h4>Đơn {order.id}</h4>
-                  <span className={`status ${order.status}`}>{statusLabels[order.status] ?? order.status}</span>
-                </header>
-                <div className="order-history-meta">
-                  <p>
-                    <strong>Ngày đặt:</strong>{' '}
-                    {new Date(order.placedAt).toLocaleString('vi-VN')}
-                  </p>
-                  <p>
-                    <strong>Địa chỉ giao:</strong> {order.deliveryAddress ?? order.customerAddress}
-                  </p>
-                  <p>
-                    <strong>Thanh toán:</strong> {order.paymentMethod ?? 'Đang cập nhật'}
-                  </p>
-                </div>
-                <footer>
-                  <p>
-                    <strong>Tổng tiền:</strong> {order.total.toLocaleString('vi-VN')} đ
-                  </p>
-                  <Link to={`/orders/${order.id}`} className="outline-button">
-                    Xem chi tiết
-                  </Link>
-                </footer>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 };
-
 export default CustomerProfilePage;

@@ -47,7 +47,17 @@ const cartReducer = (state, action) => {
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  const addToCart = (product) => dispatch({ type: 'ADD_ITEM', payload: product });
+  const addToCart = (product) => {
+    const firstRestaurant = state.items[0]?.restaurant;
+    const nextRestaurant = product.restaurant;
+
+    if (firstRestaurant && nextRestaurant && firstRestaurant !== nextRestaurant) {
+      alert('Vui lòng đặt đơn theo từng nhà hàng');
+      return;
+    }
+
+    dispatch({ type: 'ADD_ITEM', payload: product });
+  };
   const removeFromCart = (id) => dispatch({ type: 'REMOVE_ITEM', payload: id });
   const updateQuantity = (id, quantity) => dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
   const clearCart = () => dispatch({ type: 'CLEAR' });
