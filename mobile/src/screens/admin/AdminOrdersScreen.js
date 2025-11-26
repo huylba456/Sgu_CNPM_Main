@@ -7,7 +7,7 @@ import Button from '../../components/Button';
 import Chip from '../../components/Chip';
 import { colors, spacing, typography } from '../../styles/theme';
 import { useOrders } from '../../hooks/useOrders';
-import { drones } from '../../data/mockDrones';
+import { statusLabels } from '../../constants/statusLabels';
 
 const statuses = [
   { value: 'pending', label: 'Chờ xác nhận' },
@@ -19,7 +19,13 @@ const statuses = [
 
 const AdminOrdersScreen = () => {
   const navigation = useNavigation();
-  const { orders, updateOrderStatus, assignDrone, addOrderNote } = useOrders();
+  const { orders, updateOrderStatus, addOrderNote } = useOrders();
+
+  const canUpdateToStatus = (current, target) => {
+    if (current === 'pending') return ['pending', 'preparing'].includes(target);
+    if (current === 'preparing') return ['preparing', 'shipping'].includes(target);
+    return target === current;
+  };
 
   return (
     <Screen>
@@ -28,19 +34,22 @@ const AdminOrdersScreen = () => {
       {orders.map((order) => (
         <Card key={order.id} style={styles.orderCard}>
           <View style={styles.header}>
-            <Text style={styles.orderTitle}>Đơn {order.id}</Text>
+            <Text style={styles.orderTitle}>Đơn {order.code ?? order.id}</Text>
             <Text style={styles.customer}>{order.customerName}</Text>
           </View>
-          <Text style={styles.metaText}>Tổng: {order.total.toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.metaText}>Tổng: {Number(order.total ?? 0).toLocaleString('vi-VN')} đ</Text>
           <Text style={styles.metaText}>Drone: {order.droneId ?? 'Chưa gán'}</Text>
-          <Text style={styles.metaText}>Trạng thái: {order.status}</Text>
+          <Text style={styles.metaText}>Trạng thái: {statusLabels[order.status] ?? order.status}</Text>
           <View style={styles.statusRow}>
             {statuses.map((status) => (
               <Chip
                 key={status.value}
                 label={status.label}
                 active={order.status === status.value}
-                onPress={() => updateOrderStatus(order.id, status.value)}
+                onPress={() => {
+                  if (!canUpdateToStatus(order.status, status.value)) return;
+                  updateOrderStatus(order.id, status.value);
+                }}
               />
             ))}
           </View>
@@ -52,26 +61,6 @@ const AdminOrdersScreen = () => {
               value={order.note ?? ''}
               onChangeText={(value) => addOrderNote(order.id, value)}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Drone ID"
-              placeholderTextColor={colors.textMuted}
-              value={order.droneId ?? ''}
-              onChangeText={(value) => assignDrone(order.id, value)}
-            />
-          </View>
-          <View style={styles.dronesRow}>
-            <Text style={styles.metaText}>Drone gợi ý:</Text>
-            <View style={styles.chipRow}>
-              {drones.map((drone) => (
-                <Chip
-                  key={drone.id}
-                  label={`${drone.id} (${drone.battery}%)`}
-                  active={order.droneId === drone.id}
-                  onPress={() => assignDrone(order.id, drone.id)}
-                />
-              ))}
-            </View>
           </View>
           <Button
             label="Xem chi tiết"
@@ -89,20 +78,21 @@ const styles = StyleSheet.create({
     gap: spacing.md
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
+    gap: spacing.xs
   },
   orderTitle: {
     color: colors.text,
     fontSize: typography.subtitle,
-    fontWeight: '600'
+    fontWeight: '600',
+    flexShrink: 1
   },
   customer: {
-    color: colors.textMuted
+    color: colors.textMuted,
+    flexShrink: 1
   },
   metaText: {
-    color: colors.textMuted
+    color: colors.textMuted,
+    flexWrap: 'wrap'
   },
   statusRow: {
     flexDirection: 'row',
@@ -120,14 +110,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     color: colors.text,
     backgroundColor: colors.surface
-  },
-  dronesRow: {
-    gap: spacing.sm
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm
   }
 });
 

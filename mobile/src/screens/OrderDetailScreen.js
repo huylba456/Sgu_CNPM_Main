@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import Screen from '../components/Screen';
 import AppHeader from '../components/AppHeader';
@@ -6,16 +7,18 @@ import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import { colors, spacing, typography } from '../styles/theme';
 import { useOrders } from '../hooks/useOrders';
-import { statusLabels } from '../data/mockOrders';
-import { restaurants } from '../data/mockRestaurants';
-import { mockRoutes } from '../data/mockRoutes';
+import { statusLabels } from '../constants/statusLabels';
 import { useAuth } from '../hooks/useAuth';
+import { useRestaurants } from '../hooks/useRestaurants';
 
 const OrderDetailScreen = ({ route, navigation }) => {
   const { orderId } = route.params ?? {};
   const { orders, updateOrderStatus } = useOrders();
   const { user } = useAuth();
+  const { restaurants } = useRestaurants();
   const order = orders.find((item) => item.id === orderId);
+  const [remainingSeconds, setRemainingSeconds] = useState(20);
+  const [canConfirmDelivery, setCanConfirmDelivery] = useState(false);
 
   if (!order) {
     return (
@@ -27,12 +30,49 @@ const OrderDetailScreen = ({ route, navigation }) => {
   }
 
   const restaurant = restaurants.find((item) => item.id === order.restaurantId);
-  const routeInfo = mockRoutes.find((item) => item.orderId.replace('#', '') === order.id);
+  const routeInfo = useMemo(
+    () => ({
+      restaurant: restaurant?.name ?? 'Đang cập nhật',
+      customer: order.customerName ?? 'Khách hàng',
+      points: [
+        { lat: 90, lng: 10 },
+        { lat: 70, lng: 30 },
+        { lat: 55, lng: 45 },
+        { lat: 35, lng: 65 },
+        { lat: 20, lng: 80 }
+      ]
+    }),
+    [order.customerName, restaurant?.name]
+  );
   const canCancel = user?.role === 'customer' && order.status === 'pending';
-  const canAdvance = user && (user.role === 'admin' || user.role === 'restaurant');
+  const canAdvance =
+    user && (user.role === 'admin' || user.role === 'restaurant') && ['pending', 'preparing'].includes(order.status);
+
+  useEffect(() => {
+    if (user?.role !== 'customer' || order.status !== 'shipping') {
+      setRemainingSeconds(20);
+      setCanConfirmDelivery(false);
+      return undefined;
+    }
+
+    setRemainingSeconds(20);
+    setCanConfirmDelivery(false);
+    const timer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setCanConfirmDelivery(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [order.status, user?.role]);
 
   const handleCancel = () => {
-    Alert.alert('Hủy đơn hàng', `Bạn có chắc chắn muốn hủy đơn ${order.id}?`, [
+    Alert.alert('Hủy đơn hàng', `Bạn có chắc chắn muốn hủy đơn ${order.code ?? order.id}?`, [
       { text: 'Không', style: 'cancel' },
       {
         text: 'Hủy đơn',
@@ -47,21 +87,24 @@ const OrderDetailScreen = ({ route, navigation }) => {
       ? 'preparing'
       : order.status === 'preparing'
         ? 'shipping'
-        : order.status === 'shipping'
-          ? 'delivered'
-          : order.status;
+        : order.status;
 
     if (nextStatus === order.status) {
-      Alert.alert('Trạng thái', 'Đơn hàng đã hoàn tất.');
+      Alert.alert('Trạng thái', 'Chỉ có thể chuyển tiếp đến trạng thái tiếp theo.');
       return;
     }
 
     updateOrderStatus(order.id, nextStatus);
   };
 
+  const handleConfirmDelivery = () => {
+    updateOrderStatus(order.id, 'delivered');
+    setCanConfirmDelivery(false);
+  };
+
   return (
     <Screen>
-      <AppHeader title={`Đơn hàng ${order.id}`} subtitle={statusLabels[order.status] ?? order.status} />
+      <AppHeader title={`Đơn hàng ${order.code ?? order.id}`} subtitle={statusLabels[order.status] ?? order.status} />
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Thông tin giao hàng</Text>
@@ -124,6 +167,19 @@ const OrderDetailScreen = ({ route, navigation }) => {
               • Vĩ độ {point.lat}, Kinh độ {point.lng}
             </Text>
           ))}
+        </Card>
+      ) : null}
+
+      {user?.role === 'customer' && order.status === 'shipping' ? (
+        <Card style={styles.section}>
+          {canConfirmDelivery ? (
+            <View style={styles.arrivalRow}>
+              <Text style={styles.sectionTitle}>Drone đã đến nơi</Text>
+              <Button label="Đã nhận hàng" onPress={handleConfirmDelivery} />
+            </View>
+          ) : (
+            <Text style={styles.countdownText}>Drone sẽ tới trong khoảng {remainingSeconds}s</Text>
+          )}
         </Card>
       ) : null}
 
@@ -192,6 +248,12 @@ const styles = StyleSheet.create({
   routePoint: {
     color: colors.text,
     marginLeft: spacing.md
+  },
+  arrivalRow: {
+    gap: spacing.sm
+  },
+  countdownText: {
+    color: colors.accent
   },
   actions: {
     flexDirection: 'row',

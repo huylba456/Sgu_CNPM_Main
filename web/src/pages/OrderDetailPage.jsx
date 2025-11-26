@@ -49,13 +49,13 @@ const BoundsFitter = ({ start, end }) => {
 };
 
 const AnimatedDrone = ({ start, end, onArrive, isActive }) => {
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(isActive ? 0 : 1);
   const animationRef = useRef(null);
   const duration = 30000; // 30s
 
   useEffect(() => {
     if (!isActive) {
-      setProgress(0);
+      setProgress(1);
       return undefined;
     }
 
@@ -101,7 +101,7 @@ const AnimatedDrone = ({ start, end, onArrive, isActive }) => {
 const OrderDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders } = useData();
+  const { orders, updateOrder } = useData();
   const order = useMemo(() => orders.find((item) => item.id === id), [id, orders]);
   const { restaurants } = useRestaurants();
   const restaurant = useMemo(
@@ -110,10 +110,11 @@ const OrderDetailPage = () => {
   );
   const [status, setStatus] = useState(order?.status ?? 'pending');
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showArrivalModal, setShowArrivalModal] = useState(false);
+  const [droneArrived, setDroneArrived] = useState(order?.droneArrived || order?.status === 'delivered');
 
   useEffect(() => {
     setStatus(order?.status ?? 'pending');
+    setDroneArrived(order?.droneArrived || order?.status === 'delivered');
   }, [order]);
 
   const restaurantPosition = order
@@ -126,14 +127,24 @@ const OrderDetailPage = () => {
     : defaultPosition;
 
   const handleCancelOrder = useCallback(() => {
+    if (!order) return;
+    updateOrder(order.id, { status: 'cancelled' });
     setStatus('cancelled');
     setShowCancelModal(false);
-  }, []);
+  }, [order, updateOrder]);
 
   const handleDroneArrive = useCallback(() => {
+    if (!order) return;
+    setDroneArrived(true);
+    updateOrder(order.id, { droneArrived: true });
+  }, [order, updateOrder]);
+
+  const handleMarkDelivered = useCallback(() => {
+    if (!order) return;
+    updateOrder(order.id, { status: 'delivered' });
     setStatus('delivered');
-    setShowArrivalModal(true);
-  }, []);
+    setDroneArrived(false);
+  }, [order, updateOrder]);
 
   if (!order) {
     return (
@@ -243,7 +254,6 @@ const OrderDetailPage = () => {
             <h3>Hành trình drone</h3>
             <p>
               Drone đang rời {restaurant?.name ?? 'nhà hàng'} để đến {order.deliveryAddress ?? order.customerAddress}.
-              Dự kiến hạ cánh trong vòng 30 giây.
             </p>
           </header>
           <div className="mini-map">
@@ -253,9 +263,24 @@ const OrderDetailPage = () => {
               <Polyline positions={[restaurantPosition, deliveryPosition]} color="#2563eb" weight={4} dashArray="6" />
               <Marker position={restaurantPosition} />
               <Marker position={deliveryPosition} />
-              <AnimatedDrone start={restaurantPosition} end={deliveryPosition} onArrive={handleDroneArrive} isActive />
+              <AnimatedDrone
+                start={restaurantPosition}
+                end={deliveryPosition}
+                onArrive={handleDroneArrive}
+                isActive={!droneArrived}
+              />
             </MapContainer>
           </div>
+          {droneArrived ? (
+            <div className="order-actions">
+              <p>Drone đã tới nơi, hãy xác nhận khi bạn đã nhận hàng.</p>
+              <button type="button" className="primary-button" onClick={handleMarkDelivered}>
+                Đã nhận hàng
+              </button>
+            </div>
+          ) : (
+            <p className="muted-text">Dự kiến hạ cánh trong vòng 30 giây.</p>
+          )}
         </section>
       )}
 
@@ -276,19 +301,6 @@ const OrderDetailPage = () => {
         </div>
       )}
 
-      {showArrivalModal && (
-        <div className="modal-overlay" role="dialog" aria-modal="true">
-          <div className="modal">
-            <h3>Drone đã tới nơi</h3>
-            <p>Đơn hàng đã được giao thành công. Chúc bạn ngon miệng!</p>
-            <div className="modal-actions">
-              <button type="button" className="primary-button" onClick={() => setShowArrivalModal(false)}>
-                Ok
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

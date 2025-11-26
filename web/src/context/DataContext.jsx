@@ -70,6 +70,8 @@ export const DataProvider = ({ children }) => {
 
   const normalizeDroneId = (droneId) => (droneId ? resolveDocId(drones, droneId) : null);
 
+  const pickRandom = (list) => list[Math.floor(Math.random() * list.length)];
+
   const reserveDroneId = (existingOrders, preferredId) => {
     const inUse = new Set(
       existingOrders
@@ -81,8 +83,22 @@ export const DataProvider = ({ children }) => {
     const preferredDocId = normalizeDroneId(preferredId);
     if (preferredDocId && !inUse.has(preferredDocId)) return preferredDocId;
 
-    const available = activeDrones.find((drone) => !inUse.has(drone.id));
-    return available?.id ?? null;
+    const available = activeDrones.filter((drone) => !inUse.has(drone.id));
+    return available.length ? pickRandom(available)?.id ?? null : null;
+  };
+
+  const allowedTransitions = {
+    pending: ['pending', 'preparing', 'cancelled'],
+    preparing: ['preparing', 'shipping', 'cancelled'],
+    shipping: ['shipping', 'delivered'],
+    delivered: ['delivered'],
+    cancelled: ['cancelled']
+  };
+
+  const validateStatus = (currentStatus, requestedStatus) => {
+    if (!requestedStatus) return currentStatus;
+    const allowed = allowedTransitions[currentStatus] ?? [currentStatus];
+    return allowed.includes(requestedStatus) ? requestedStatus : currentStatus;
   };
 
   const addProduct = async (payload) => {
@@ -142,7 +158,7 @@ export const DataProvider = ({ children }) => {
     );
 
     const currentOrder = orders.find((order) => order.id === docId || order.code === id);
-    const nextStatus = updates.status ?? currentOrder?.status;
+    const nextStatus = validateStatus(currentOrder?.status ?? 'pending', updates.status ?? currentOrder?.status);
     const requestedDroneId = normalizeDroneId(updates.droneId ?? currentOrder?.droneId);
     const shouldAssignDrone = nextStatus === 'shipping' && !requestedDroneId;
     const safeDroneId =
@@ -150,7 +166,7 @@ export const DataProvider = ({ children }) => {
         ? reserveDroneId(orders.filter((order) => order.id !== docId), requestedDroneId)
         : requestedDroneId;
 
-    await updateDoc(doc(db, 'orders', docId), { ...updates, droneId: safeDroneId });
+    await updateDoc(doc(db, 'orders', docId), { ...updates, status: nextStatus, droneId: safeDroneId });
   };
 
   const addDrone = async (payload) => {

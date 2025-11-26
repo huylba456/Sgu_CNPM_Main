@@ -14,6 +14,12 @@ const AdminOrdersPage = () => {
   const { orders, updateOrder } = useData();
   const [filters, setFilters] = useState({ status: 'all', search: '' });
 
+  const getAvailableStatuses = (current) => {
+    if (current === 'pending') return statuses.filter((status) => ['pending', 'preparing'].includes(status.value));
+    if (current === 'preparing') return statuses.filter((status) => ['preparing', 'shipping'].includes(status.value));
+    return statuses.filter((status) => status.value === current);
+  };
+
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const code = (order.code ?? order.id ?? '').toLowerCase();
@@ -46,8 +52,9 @@ const AdminOrdersPage = () => {
           <select
             value={row.original.status}
             onChange={(event) => handleStatusChange(row.original.id, event.target.value)}
+            disabled={getAvailableStatuses(row.original.status).length <= 1}
           >
-            {statuses.map((status) => (
+            {getAvailableStatuses(row.original.status).map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>
@@ -57,13 +64,7 @@ const AdminOrdersPage = () => {
       },
       {
         header: 'Drone',
-        cell: ({ row }) => (
-          <input
-            value={row.original.droneId ?? ''}
-            onChange={(event) => handleDroneAssign(row.original.id, event.target.value)}
-            placeholder="Mã drone"
-          />
-        )
+        cell: ({ row }) => row.original.droneId ?? 'Đang phân bổ'
       },
       {
         header: 'Ghi chú',
@@ -80,8 +81,6 @@ const AdminOrdersPage = () => {
   );
 
   const handleStatusChange = (id, status) => updateOrder(id, { status });
-
-  const handleDroneAssign = (id, droneId) => updateOrder(id, { droneId });
 
   const handleNoteChange = (id, note) => updateOrder(id, { note });
 
