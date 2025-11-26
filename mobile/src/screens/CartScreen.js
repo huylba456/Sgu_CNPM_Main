@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import Screen from '../components/Screen';
 import AppHeader from '../components/AppHeader';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
+import Stack from '../components/Stack';
 import { colors, radius, spacing, typography } from '../styles/theme';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
@@ -17,10 +18,7 @@ const CartScreen = ({ navigation }) => {
     return (
       <Screen>
         <AppHeader title="Giỏ hàng" subtitle="Đăng nhập để tiếp tục đặt món." />
-        <EmptyState
-          title="Bạn cần đăng nhập"
-          description="Giỏ hàng chỉ khả dụng khi bạn đăng nhập."
-        />
+        <EmptyState title="Bạn cần đăng nhập" description="Giỏ hàng chỉ khả dụng khi bạn đăng nhập." />
         <Button label="Đăng nhập" onPress={() => navigation.navigate('Login')} />
       </Screen>
     );
@@ -35,39 +33,44 @@ const CartScreen = ({ navigation }) => {
       ) : (
         <>
           {cartItems.map((item) => (
-            <Card key={item.id} style={styles.itemCard}>
-              <View style={styles.itemRow}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} đ</Text>
-                </View>
-                <Button label="Xóa" variant="ghost" onPress={() => removeFromCart(item.id)} />
-              </View>
-              <View style={styles.quantityRow}>
-                <Text style={styles.quantityLabel}>Số lượng</Text>
-                <View style={styles.stepper}>
-                  <Pressable
-                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
-                    style={styles.stepperButton}
-                  >
-                    <Text style={styles.stepperText}>-</Text>
-                  </Pressable>
-                  <Text style={styles.quantityValue}>{item.quantity}</Text>
-                  <Pressable
-                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                    style={styles.stepperButton}
-                  >
-                    <Text style={styles.stepperText}>+</Text>
-                  </Pressable>
-                </View>
-              </View>
+            <Card key={item.id}>
+              <Stack gap={spacing.md}>
+                <Stack direction="row" align="center" justify="space-between">
+                  <Stack gap={spacing.xs} style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} đ</Text>
+                  </Stack>
+                  <Button label="Xóa" variant="ghost" onPress={() => removeFromCart(item.id)} />
+                </Stack>
+
+                <Stack direction="row" align="center" justify="space-between">
+                  <Text style={styles.quantityLabel}>Số lượng</Text>
+                  <Stack direction="row" align="center" gap={spacing.sm}>
+                    <Pressable
+                      onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                      style={styles.stepperButton}
+                    >
+                      <Text style={styles.stepperText}>-</Text>
+                    </Pressable>
+                    <Text style={styles.quantityValue}>{item.quantity}</Text>
+                    <Pressable
+                      onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                      style={styles.stepperButton}
+                    >
+                      <Text style={styles.stepperText}>+</Text>
+                    </Pressable>
+                  </Stack>
+                </Stack>
+              </Stack>
             </Card>
           ))}
 
-          <Card style={styles.summary}>
-            <Text style={styles.summaryTitle}>Tổng thanh toán</Text>
-            <Text style={styles.summaryValue}>{total.toLocaleString('vi-VN')} đ</Text>
-            <Button label="Tiến hành thanh toán" onPress={() => navigation.navigate('Checkout')} />
+          <Card>
+            <Stack gap={spacing.sm}>
+              <Text style={styles.summaryTitle}>Tổng thanh toán</Text>
+              <Text style={styles.summaryValue}>{total.toLocaleString('vi-VN')} đ</Text>
+              <Button label="Tiến hành thanh toán" onPress={() => navigation.navigate('Checkout')} />
+            </Stack>
           </Card>
         </>
       )}
@@ -76,16 +79,7 @@ const CartScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  itemCard: {
-    gap: spacing.md
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
   itemInfo: {
-    gap: spacing.xs,
     flex: 1
   },
   itemName: {
@@ -96,18 +90,8 @@ const styles = StyleSheet.create({
   itemPrice: {
     color: colors.textMuted
   },
-  quantityRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
   quantityLabel: {
     color: colors.textMuted
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm
   },
   stepperButton: {
     width: 36,
@@ -128,9 +112,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     minWidth: 28,
     textAlign: 'center'
-  },
-  summary: {
-    gap: spacing.sm
   },
   summaryTitle: {
     color: colors.textMuted

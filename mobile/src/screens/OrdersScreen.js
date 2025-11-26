@@ -6,10 +6,11 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import StatHighlight from '../components/StatHighlight';
+import Stack from '../components/Stack';
 import { colors, spacing, typography } from '../styles/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
-import { statusLabels } from '../data/mockOrders';
+import { statusLabels } from '../constants/statusLabels';
 
 const OrdersScreen = ({ navigation }) => {
   const { user } = useAuth();
@@ -40,10 +41,7 @@ const OrdersScreen = ({ navigation }) => {
     return (
       <Screen>
         <AppHeader title="Đơn hàng" subtitle="Đăng nhập để theo dõi đơn hàng của bạn." />
-        <EmptyState
-          title="Bạn cần đăng nhập"
-          description="Đăng nhập để xem và theo dõi trạng thái đơn hàng."
-        />
+        <EmptyState title="Bạn cần đăng nhập" description="Đăng nhập để xem và theo dõi trạng thái đơn hàng." />
         <Button label="Đăng nhập" onPress={() => navigation.navigate('Login')} />
       </Screen>
     );
@@ -64,11 +62,11 @@ const OrdersScreen = ({ navigation }) => {
     <Screen>
       <AppHeader title="Đơn hàng của tôi" subtitle="Theo dõi hành trình drone và trạng thái giao hàng." />
 
-      <View style={styles.statsRow}>
+      <Stack direction="row" wrap gap={spacing.md}>
         <StatHighlight label="Tổng đơn" value={stats.total} />
         <StatHighlight label="Đã giao" value={stats.delivered} tone="success" />
         <StatHighlight label="Đang giao" value={stats.shipping} tone="accent" />
-      </View>
+      </Stack>
 
       {visibleOrders.length === 0 ? (
         <EmptyState
@@ -77,48 +75,51 @@ const OrdersScreen = ({ navigation }) => {
         />
       ) : (
         visibleOrders.map((order) => (
-          <Card key={order.id} style={styles.orderCard}>
-            <View style={styles.orderHeader}>
-              <Text style={styles.orderTitle}>Đơn {order.id}</Text>
-              <Text style={[styles.status, styles[`status_${order.status}`]]}>
-                {statusLabels[order.status] ?? order.status}
-              </Text>
-            </View>
-            <View style={styles.orderMeta}>
-              <Text style={styles.metaText}>Địa chỉ giao: {order.deliveryAddress ?? order.customerAddress}</Text>
-              <Text style={styles.metaText}>Thanh toán: {order.paymentMethod ?? 'Đang cập nhật'}</Text>
-              <Text style={styles.metaText}>
-                Drone phụ trách: {order.droneId ?? 'Đang phân bổ'}
-              </Text>
-              <Text style={styles.metaText}>
-                Thời gian đặt: {new Date(order.placedAt).toLocaleString('vi-VN')}
-              </Text>
-            </View>
-            <View style={styles.itemList}>
-              {order.items.map((item) => (
-                <View key={item.id} style={styles.itemRow}>
-                  <Text style={styles.itemName}>
-                    {item.name} x{item.quantity}
-                  </Text>
-                  <Text style={styles.itemPrice}>
-                    {(item.price * item.quantity).toLocaleString('vi-VN')} đ
-                  </Text>
-                </View>
-              ))}
-            </View>
-            <View style={styles.orderFooter}>
-              <Text style={styles.total}>Tổng: {order.total.toLocaleString('vi-VN')} đ</Text>
-              <View style={styles.actions}>
-                <Button
-                  label="Xem chi tiết"
-                  variant="ghost"
-                  onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
-                />
-                {user.role === 'customer' && order.status === 'pending' ? (
-                  <Button label="Hủy đơn" variant="ghost" onPress={() => handleCancel(order.id)} />
-                ) : null}
-              </View>
-            </View>
+          <Card key={order.id}>
+            <Stack gap={spacing.md}>
+              <Stack direction="row" justify="space-between" align="flex-start" wrap>
+                <Text style={styles.orderTitle}>Đơn {order.id}</Text>
+                <Text style={[styles.status, styles[`status_${order.status}`]]}>
+                  {statusLabels[order.status] ?? order.status}
+                </Text>
+              </Stack>
+
+              <Stack gap={spacing.xs}>
+                <Text style={styles.metaText}>Địa chỉ giao: {order.deliveryAddress ?? order.customerAddress}</Text>
+                <Text style={styles.metaText}>Thanh toán: {order.paymentMethod ?? 'Đang cập nhật'}</Text>
+                <Text style={styles.metaText}>Drone phụ trách: {order.droneId ?? 'Đang phân bổ'}</Text>
+                <Text style={styles.metaText}>
+                  Thời gian đặt: {new Date(order.placedAt).toLocaleString('vi-VN')}
+                </Text>
+              </Stack>
+
+              <Stack gap={spacing.xs}>
+                {order.items.map((item) => (
+                  <View key={item.id} style={styles.itemRow}>
+                    <Text style={styles.itemName}>
+                      {item.name} x{item.quantity}
+                    </Text>
+                    <Text style={styles.itemPrice}>
+                      {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                    </Text>
+                  </View>
+                ))}
+              </Stack>
+
+              <Stack direction="row" justify="space-between" align="center">
+                <Text style={styles.total}>Tổng: {order.total.toLocaleString('vi-VN')} đ</Text>
+                <Stack direction="row" wrap gap={spacing.sm} justify="flex-end">
+                  <Button
+                    label="Xem chi tiết"
+                    variant="ghost"
+                    onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+                  />
+                  {user.role === 'customer' && order.status === 'pending' ? (
+                    <Button label="Hủy đơn" variant="ghost" onPress={() => handleCancel(order.id)} />
+                  ) : null}
+                </Stack>
+              </Stack>
+            </Stack>
           </Card>
         ))
       )}
@@ -127,30 +128,19 @@ const OrdersScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md
-  },
-  orderCard: {
-    gap: spacing.md
-  },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
   orderTitle: {
     color: colors.text,
     fontSize: typography.subtitle,
-    fontWeight: '600'
+    fontWeight: '600',
+    flexShrink: 1
   },
   status: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: 999,
     fontSize: typography.small,
-    color: colors.text
+    color: colors.text,
+    flexShrink: 1
   },
   status_pending: {
     backgroundColor: 'rgba(250,204,21,0.2)',
@@ -172,14 +162,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(248,113,113,0.2)',
     color: colors.danger
   },
-  orderMeta: {
-    gap: spacing.xs
-  },
   metaText: {
     color: colors.textMuted
-  },
-  itemList: {
-    gap: spacing.xs
   },
   itemRow: {
     flexDirection: 'row',
@@ -193,19 +177,10 @@ const styles = StyleSheet.create({
   itemPrice: {
     color: colors.text
   },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
   total: {
     color: colors.accent,
     fontSize: typography.subtitle,
     fontWeight: '700'
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm
   }
 });
 

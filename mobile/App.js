@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler';
+import './src/utils/patchGap';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -9,6 +10,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 import { OrdersProvider } from './src/context/OrdersContext';
+import { ProductsProvider } from './src/context/ProductsContext';
+import { RestaurantProvider } from './src/context/RestaurantContext';
 import { useAuth } from './src/hooks/useAuth';
 import { colors } from './src/styles/theme';
 import HomeScreen from './src/screens/HomeScreen';
@@ -154,11 +157,15 @@ const RootNavigator = () => (
 );
 
 const AppProviders = ({ children }) => (
-  <AuthProvider>
-    <OrdersProvider>
-      <CartProvider>{children}</CartProvider>
-    </OrdersProvider>
-  </AuthProvider>
+  <RestaurantProvider>
+    <AuthProvider>
+      <ProductsProvider>
+        <OrdersProvider>
+          <CartProvider>{children}</CartProvider>
+        </OrdersProvider>
+      </ProductsProvider>
+    </AuthProvider>
+  </RestaurantProvider>
 );
 
 export default function App() {

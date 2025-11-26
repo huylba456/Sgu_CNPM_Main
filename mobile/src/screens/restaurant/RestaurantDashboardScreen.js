@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Screen from '../../components/Screen';
@@ -6,19 +6,38 @@ import AppHeader from '../../components/AppHeader';
 import Card from '../../components/Card';
 import StatHighlight from '../../components/StatHighlight';
 import { colors, spacing, typography } from '../../styles/theme';
-import { restaurants } from '../../data/mockRestaurants';
 import { useAuth } from '../../hooks/useAuth';
 import { useOrders } from '../../hooks/useOrders';
-import { statusLabels } from '../../data/mockOrders';
+import { statusLabels } from '../../constants/statusLabels';
 import Chip from '../../components/Chip';
 import Button from '../../components/Button';
+import { useRestaurants } from '../../hooks/useRestaurants';
 
 const RestaurantDashboardScreen = () => {
   const { user } = useAuth();
   const { orders, getStats } = useOrders();
   const navigation = useNavigation();
   const isAdmin = user?.role === 'admin';
+  const { restaurants } = useRestaurants();
   const [selectedRestaurantId, setSelectedRestaurantId] = useState(restaurants[0]?.id ?? '');
+  const assignedRestaurant =
+    restaurants.find((item) => item.id === user?.restaurantId) ??
+    restaurants.find((item) => item.name === user?.restaurantName) ??
+    null;
+
+  const now = useMemo(() => new Date(), []);
+  const startOfMonth = useMemo(() => new Date(now.getFullYear(), now.getMonth(), 1), [now]);
+  const startOfNextMonth = useMemo(() => new Date(now.getFullYear(), now.getMonth() + 1, 1), [now]);
+  const last30DaysCutoff = useMemo(() => new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000), [now]);
+
+  const parsePlacedDate = (order) => new Date(order.placedAt ?? order.createdAt ?? order.updatedAt ?? now);
+
+  useEffect(() => {
+    if (!restaurants.length) return;
+    if (!selectedRestaurantId || !restaurants.find((item) => item.id === selectedRestaurantId)) {
+      setSelectedRestaurantId(restaurants[0]?.id ?? '');
+    }
+  }, [restaurants, selectedRestaurantId]);
 
   const restaurantSummaries = useMemo(
     () =>
@@ -28,35 +47,69 @@ const RestaurantDashboardScreen = () => {
           .slice()
           .sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
         const stats = getStats(assignedOrders);
-        const revenue = assignedOrders.reduce((sum, order) => sum + order.total, 0);
+        const revenue = assignedOrders
+          .filter((order) => {
+            const placedDate = parsePlacedDate(order);
+            return placedDate >= startOfMonth && placedDate < startOfNextMonth;
+          })
+          .reduce((sum, order) => sum + order.total, 0);
         const inProgress = assignedOrders.filter((order) =>
           ['pending', 'preparing', 'shipping'].includes(order.status)
         ).length;
 
-        return { ...restaurant, stats, revenue, inProgress, orders: assignedOrders };
+        const newCustomers = (() => {
+          const unique = new Set();
+          assignedOrders.forEach((order) => {
+            const placedDate = parsePlacedDate(order);
+            if (placedDate >= last30DaysCutoff) {
+              unique.add(order.customerEmail ?? order.customerName);
+            }
+          });
+          return unique.size;
+        })();
+
+        return { ...restaurant, stats, revenue, inProgress, orders: assignedOrders, newCustomers };
       }),
-    [orders, getStats]
+    [getStats, last30DaysCutoff, orders, parsePlacedDate, restaurants, startOfMonth, startOfNextMonth]
   );
 
-  const fallbackRestaurant = restaurants[0];
-  const restaurant = restaurants.find((item) => item.id === user?.restaurantId) ?? fallbackRestaurant;
+  const restaurant = assignedRestaurant;
 
   const restaurantOrders = useMemo(
     () =>
-      orders
-        .filter((order) => order.restaurantId === restaurant.id)
-        .slice()
-        .sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime()),
-    [orders, restaurant.id]
+      restaurant
+        ? orders
+            .filter((order) => order.restaurantId === restaurant.id)
+            .slice()
+            .sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime())
+        : [],
+    [orders, restaurant?.id]
   );
 
-  const revenue = restaurantOrders.reduce((sum, order) => sum + order.total, 0);
+  const revenue = restaurantOrders
+    .filter((order) => {
+      const placedDate = parsePlacedDate(order);
+      return placedDate >= startOfMonth && placedDate < startOfNextMonth;
+    })
+    .reduce((sum, order) => sum + order.total, 0);
   const inProgress = restaurantOrders.filter((order) =>
     ['pending', 'preparing', 'shipping'].includes(order.status)
   ).length;
 
+  const newCustomers = useMemo(() => {
+    const unique = new Set();
+    restaurantOrders.forEach((order) => {
+      const placedDate = parsePlacedDate(order);
+      if (placedDate >= last30DaysCutoff) {
+        unique.add(order.customerEmail ?? order.customerName);
+      }
+    });
+    return unique.size;
+  }, [last30DaysCutoff, parsePlacedDate, restaurantOrders]);
+
   const totalRevenue = restaurantSummaries.reduce((sum, item) => sum + item.revenue, 0);
   const totalOrders = restaurantSummaries.reduce((sum, item) => sum + item.stats.total, 0);
+  const totalNewCustomers = restaurantSummaries.reduce((sum, item) => sum + item.newCustomers, 0);
   const selectedRestaurant =
     restaurantSummaries.find((item) => item.id === selectedRestaurantId) ?? restaurantSummaries[0];
 
@@ -72,7 +125,8 @@ const RestaurantDashboardScreen = () => {
           <View style={styles.statRow}>
             <StatHighlight label="Tổng nhà hàng" value={restaurants.length} />
             <StatHighlight label="Tổng đơn" value={totalOrders} tone="accent" />
-            <StatHighlight label="Doanh thu" value={`${totalRevenue.toLocaleString('vi-VN')} đ`} />
+            <StatHighlight label="Doanh thu tháng" value={`${totalRevenue.toLocaleString('vi-VN')} đ`} />
+            <StatHighlight label="KH mới" value={`${totalNewCustomers} (30 ngày)`} tone="success" />
           </View>
 
           <Card style={styles.panel}>
@@ -107,6 +161,11 @@ const RestaurantDashboardScreen = () => {
                   label="Doanh thu"
                   value={`${selectedRestaurant.revenue.toLocaleString('vi-VN')} đ`}
                   tone="success"
+                />
+                <StatHighlight
+                  label="KH mới"
+                  value={`${selectedRestaurant.newCustomers} (30 ngày)`}
+                  helpText="Dựa trên lịch sử đơn"
                 />
               </View>
               {selectedRestaurant.orders.length > 0 ? (
@@ -143,12 +202,13 @@ const RestaurantDashboardScreen = () => {
                   <Text style={styles.overviewStat}>
                     Doanh thu: {item.revenue.toLocaleString('vi-VN')} đ
                   </Text>
+                  <Text style={styles.overviewStat}>KH mới (30 ngày): {item.newCustomers}</Text>
                 </View>
               </View>
             ))}
           </Card>
         </>
-      ) : (
+      ) : assignedRestaurant ? (
         <>
           <AppHeader
             title={restaurant.name}
@@ -156,9 +216,9 @@ const RestaurantDashboardScreen = () => {
           />
 
           <View style={styles.statRow}>
-            <StatHighlight label="Doanh thu" value={`${revenue.toLocaleString('vi-VN')} đ`} />
+            <StatHighlight label="Doanh thu tháng" value={`${revenue.toLocaleString('vi-VN')} đ`} />
             <StatHighlight label="Đơn đang xử lý" value={inProgress} tone="accent" />
-            <StatHighlight label="Đánh giá" value="4.6/5" helpText="98% khách hài lòng" />
+            <StatHighlight label="Khách hàng mới" value={`${newCustomers} (30 ngày)`} helpText="Theo lịch sử đặt" />
           </View>
 
           <Card style={styles.panel}>
@@ -191,6 +251,13 @@ const RestaurantDashboardScreen = () => {
             ))}
           </Card>
         </>
+      ) : (
+        <Card style={styles.panel}>
+          <Text style={styles.panelTitle}>Chưa gán nhà hàng</Text>
+          <Text style={styles.panelMeta}>
+            Vui lòng liên hệ quản trị viên để gán tài khoản của bạn vào một nhà hàng cụ thể.
+          </Text>
+        </Card>
       )}
     </Screen>
   );

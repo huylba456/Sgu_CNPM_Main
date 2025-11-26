@@ -9,12 +9,14 @@ import Chip from '../components/Chip';
 import { colors, spacing, typography } from '../styles/theme';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
+import { useOrders } from '../hooks/useOrders';
 
 const paymentMethods = ['Ví FoodFast Pay', 'Thẻ tín dụng', 'Chuyển khoản'];
 
 const CheckoutScreen = ({ navigation }) => {
   const { cartItems, clearCart } = useCart();
   const { user } = useAuth();
+  const { addOrder } = useOrders();
   const [recipient, setRecipient] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
@@ -66,6 +68,16 @@ const CheckoutScreen = ({ navigation }) => {
         {
           text: 'Xác nhận',
           onPress: () => {
+            addOrder({
+              customerName: recipient.trim() || user.name,
+              customerEmail: email.trim() || user.email,
+              customerAddress: address,
+              deliveryAddress: address,
+              paymentMethod,
+              items: cartItems,
+              total,
+              note
+            });
             clearCart();
             Alert.alert('Đặt hàng thành công', 'Đơn hàng đã được tạo, bạn có thể theo dõi trong mục Đơn hàng.');
             navigation.navigate('MainTabs', { screen: 'Orders' });

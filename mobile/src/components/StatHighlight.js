@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../styles/theme';
+import Stack from './Stack';
 
 const StatHighlight = ({ label, value, helpText, tone = 'default' }) => (
   <View style={[styles.card, toneStyles[tone] ?? toneStyles.default]}>
-    <Text style={styles.value}>{value}</Text>
-    <Text style={styles.label}>{label}</Text>
-    {helpText ? <Text style={styles.help}>{helpText}</Text> : null}
+    <Stack gap={spacing.xs}>
+      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.label}>{label}</Text>
+      {helpText ? <Text style={styles.help}>{helpText}</Text> : null}
+    </Stack>
   </View>
 );
 
@@ -28,8 +31,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs
+    borderColor: colors.border
   },
   value: {
     color: colors.text,

@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import Screen from '../components/Screen';
 import AppHeader from '../components/AppHeader';
 import Button from '../components/Button';
+import Stack from '../components/Stack';
 import { colors, radius, spacing, typography } from '../styles/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
@@ -83,7 +84,7 @@ const LoginScreen = ({ navigation }) => {
         }
       />
 
-      <View style={styles.switcher}>
+      <Stack direction="row" gap={spacing.md}>
         <Button
           label="Đăng nhập"
           variant={mode === 'login' ? 'primary' : 'secondary'}
@@ -102,12 +103,16 @@ const LoginScreen = ({ navigation }) => {
           }}
           style={styles.switchButton}
         />
-      </View>
+      </Stack>
 
-      {message ? <View style={styles.alert}><Text style={styles.alertText}>{message}</Text></View> : null}
+      {message ? (
+        <View style={styles.alert}>
+          <Text style={styles.alertText}>{message}</Text>
+        </View>
+      ) : null}
 
       {mode === 'login' ? (
-        <View style={styles.form}>
+        <Stack gap={spacing.sm}>
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
@@ -128,10 +133,11 @@ const LoginScreen = ({ navigation }) => {
             <Text style={styles.hint}>Customer: customer@foodfast.io / 123456</Text>
             <Text style={styles.hint}>Admin: admin@foodfast.io / admin</Text>
             <Text style={styles.hint}>Nhà hàng: restaurant@foodfast.io / restaurant</Text>
+            <Text style={styles.hint}>Nhà hàng 2: sushi@foodfast.io / sushi</Text>
           </View>
-        </View>
+        </Stack>
       ) : (
-        <View style={styles.form}>
+        <Stack gap={spacing.sm}>
           <Text style={styles.label}>Họ tên</Text>
           <TextInput
             style={styles.input}
@@ -174,7 +180,7 @@ const LoginScreen = ({ navigation }) => {
             onChangeText={(value) => setRegisterForm((prev) => ({ ...prev, confirmPassword: value }))}
           />
           <Button label="Tạo tài khoản" onPress={handleSubmit} style={styles.submit} />
-        </View>
+        </Stack>
       )}
 
       <Button label="Tiếp tục như khách" variant="ghost" onPress={handleContinueAsGuest} />
@@ -183,15 +189,8 @@ const LoginScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  switcher: {
-    flexDirection: 'row',
-    gap: spacing.md
-  },
   switchButton: {
     flex: 1
-  },
-  form: {
-    gap: spacing.sm
   },
   label: {
     color: colors.textMuted,

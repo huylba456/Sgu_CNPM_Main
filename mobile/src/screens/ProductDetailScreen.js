@@ -6,14 +6,15 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import { colors, radius, spacing, typography } from '../styles/theme';
-import { getProductById, products } from '../data/mockProducts';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { resolveProductImage } from '../utils/resolveProductImage';
+import { useProducts } from '../hooks/useProducts';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const { productId } = route.params ?? {};
-  const product = useMemo(() => getProductById(productId), [productId]);
+  const { products } = useProducts();
+  const product = useMemo(() => products.find((item) => item.id === productId), [productId, products]);
   const { addToCart } = useCart();
   const { user } = useAuth();
 
@@ -26,8 +27,11 @@ const ProductDetailScreen = ({ route, navigation }) => {
   }
 
   const relatedProducts = useMemo(
-    () => products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 3),
-    [product]
+    () =>
+      products
+        .filter((item) => item.category === product.category && item.id !== product.id)
+        .slice(0, 3),
+    [product, products]
   );
 
   const heroImage = resolveProductImage(product.image);

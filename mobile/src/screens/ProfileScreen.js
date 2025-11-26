@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import Screen from '../components/Screen';
 import AppHeader from '../components/AppHeader';
 import Card from '../components/Card';
@@ -8,13 +8,15 @@ import EmptyState from '../components/EmptyState';
 import { colors, spacing, typography } from '../styles/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
-import { statusLabels } from '../data/mockOrders';
-import { restaurants } from '../data/mockRestaurants';
-import { drones } from '../data/mockDrones';
+import { statusLabels } from '../constants/statusLabels';
+import { useRestaurants } from '../hooks/useRestaurants';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, logout, users } = useAuth();
-  const { orders, getStats } = useOrders();
+  const { user, logout, users, updateUser } = useAuth();
+  const { orders, getStats, drones } = useOrders();
+  const { restaurants } = useRestaurants();
+  const [form, setForm] = useState({ name: '', phone: '', address: '' });
+  const [status, setStatus] = useState('');
 
   const sortedOrders = useMemo(
     () =>
@@ -39,6 +41,30 @@ const ProfileScreen = ({ navigation }) => {
 
     return sortedOrders.filter((order) => order.customerEmail === user.email);
   }, [sortedOrders, user?.email]);
+
+  useEffect(() => {
+    if (!user) return;
+    setForm({
+      name: user.name ?? '',
+      phone: user.phone ?? '',
+      address: user.address ?? ''
+    });
+  }, [user]);
+
+  const handleChange = (name, value) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = () => {
+    if (!user) return;
+    const updates = {
+      name: form.name.trim() || user.name,
+      phone: form.phone.trim(),
+      address: form.address.trim()
+    };
+    updateUser(user.id, updates);
+    setStatus('Đã lưu thay đổi của bạn.');
+  };
 
   if (!user) {
     return (
@@ -135,7 +161,7 @@ const ProfileScreen = ({ navigation }) => {
               return (
                 <View key={order.id} style={styles.historyCard}>
                   <View style={styles.historyHeader}>
-                    <Text style={styles.historyTitle}>Đơn {order.id}</Text>
+                    <Text style={styles.historyTitle}>Đơn {order.code ?? order.id}</Text>
                     <Text style={[styles.status, styles[`status_${order.status}`]]}>
                       {statusLabels[order.status] ?? order.status}
                     </Text>
@@ -230,7 +256,7 @@ const ProfileScreen = ({ navigation }) => {
             restaurantOrders.map((order) => (
               <View key={order.id} style={styles.historyCard}>
                 <View style={styles.historyHeader}>
-                  <Text style={styles.historyTitle}>Đơn {order.id}</Text>
+                  <Text style={styles.historyTitle}>Đơn {order.code ?? order.id}</Text>
                   <Text style={[styles.status, styles[`status_${order.status}`]]}>
                     {statusLabels[order.status] ?? order.status}
                   </Text>
@@ -261,21 +287,41 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Họ và tên</Text>
-            <Text style={styles.value}>{user.name}</Text>
+            <TextInput
+              style={styles.input}
+              value={form.name}
+              onChangeText={(text) => handleChange('name', text)}
+              placeholder="Nhập họ tên"
+            />
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Email</Text>
-            <Text style={styles.value}>{user.email}</Text>
+            <Text style={[styles.value, styles.readonly]}>{user.email}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Số điện thoại</Text>
-            <Text style={styles.value}>{user.phone || 'Chưa cập nhật'}</Text>
+            <TextInput
+              style={styles.input}
+              value={form.phone}
+              onChangeText={(text) => handleChange('phone', text)}
+              placeholder="Nhập số điện thoại"
+              keyboardType="phone-pad"
+            />
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Địa chỉ</Text>
-            <Text style={styles.value}>{user.address || 'Chưa cập nhật'}</Text>
+            <TextInput
+              style={styles.input}
+              value={form.address}
+              onChangeText={(text) => handleChange('address', text)}
+              placeholder="Nhập địa chỉ giao hàng"
+            />
           </View>
-          <Button label="Đăng xuất" variant="ghost" onPress={logout} />
+          {status ? <Text style={styles.statusText}>{status}</Text> : null}
+          <View style={styles.actions}>
+            <Button label="Lưu thay đổi" onPress={handleSave} />
+            <Button label="Đăng xuất" variant="ghost" onPress={logout} />
+          </View>
         </Card>
 
         <Card style={styles.profileCard}>
@@ -294,39 +340,6 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </Card>
       </View>
-
-      <Card style={styles.orderHistory}>
-        <Text style={styles.sectionTitle}>Lịch sử đơn hàng</Text>
-        {customerOrders.length === 0 ? (
-          <Text style={styles.emptyHistory}>Bạn chưa có đơn hàng nào.</Text>
-        ) : (
-          customerOrders.map((order) => (
-            <View key={order.id} style={styles.historyCard}>
-              <View style={styles.historyHeader}>
-                <Text style={styles.historyTitle}>Đơn {order.id}</Text>
-                <Text style={[styles.status, styles[`status_${order.status}`]]}>
-                  {statusLabels[order.status] ?? order.status}
-                </Text>
-              </View>
-              <Text style={styles.metaText}>
-                Ngày đặt: {new Date(order.placedAt).toLocaleString('vi-VN')}
-              </Text>
-              <Text style={styles.metaText}>
-                Địa chỉ giao: {order.deliveryAddress ?? order.customerAddress}
-              </Text>
-              <Text style={styles.metaText}>Thanh toán: {order.paymentMethod ?? 'Đang cập nhật'}</Text>
-              <View style={styles.historyFooter}>
-                <Text style={styles.historyTotal}>{order.total.toLocaleString('vi-VN')} đ</Text>
-                <Button
-                  label="Chi tiết"
-                  variant="ghost"
-                  onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
-                />
-              </View>
-            </View>
-          ))
-        )}
-      </Card>
     </Screen>
   );
 };
@@ -345,7 +358,9 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    alignItems: 'center'
   },
   label: {
     color: colors.textMuted,
@@ -355,6 +370,27 @@ const styles = StyleSheet.create({
     color: colors.text,
     flex: 1,
     textAlign: 'right'
+  },
+  readonly: {
+    color: colors.textMuted
+  },
+  input: {
+    flex: 1,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    color: colors.text,
+    backgroundColor: colors.surface
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.sm
+  },
+  statusText: {
+    color: colors.success,
+    fontSize: typography.small
   },
   orderHistory: {
     gap: spacing.md

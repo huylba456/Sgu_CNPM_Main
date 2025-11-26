@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import Screen from '../../components/Screen';
 import AppHeader from '../../components/AppHeader';
@@ -6,17 +6,23 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Chip from '../../components/Chip';
 import { colors, spacing, typography } from '../../styles/theme';
-import { categories, products as allProducts } from '../../data/mockProducts';
 import { useAuth } from '../../hooks/useAuth';
-
-const generateId = () => `p-${Math.random().toString(36).slice(2, 8)}`;
+import { useProducts } from '../../hooks/useProducts';
+import { useRestaurants } from '../../hooks/useRestaurants';
 
 const RestaurantProductsScreen = () => {
   const { user } = useAuth();
-  const restaurantName = user?.restaurantName ?? 'FastGrill Station';
-  const [products, setProducts] = useState(
-    allProducts.filter((product) => product.restaurant === restaurantName)
+  const { restaurants } = useRestaurants();
+  const restaurant = useMemo(
+    () =>
+      restaurants.find((item) => item.id === user?.restaurantId) ||
+      restaurants.find((item) => item.name === user?.restaurantName) ||
+      null,
+    [restaurants, user?.restaurantId, user?.restaurantName]
   );
+  const restaurantName = restaurant?.name ?? user?.restaurantName ?? '';
+  const { products: allProducts, categories, addProduct, updateProduct, deleteProduct } = useProducts();
+  const [products, setProducts] = useState([]);
   const [form, setForm] = useState({
     name: '',
     price: '',
@@ -27,29 +33,30 @@ const RestaurantProductsScreen = () => {
   const [editingId, setEditingId] = useState(null);
 
   const handleSubmit = () => {
+    if (!restaurantName) {
+      Alert.alert('Chưa gán nhà hàng', 'Tài khoản của bạn chưa được gán vào nhà hàng cụ thể.');
+      return;
+    }
+
     if (!form.name.trim() || !form.price) {
       Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên món và giá bán.');
       return;
     }
 
     const payload = {
-      id: editingId ?? generateId(),
       name: form.name.trim(),
       price: Number(form.price),
       category: form.category,
       restaurant: restaurantName,
       description: form.description.trim(),
-      image: form.image.trim() || allProducts[0].image,
-      rating: 4.5,
-      deliveryTime: 12
+      image: form.image.trim()
     };
 
-    setProducts((prev) => {
-      if (editingId) {
-        return prev.map((product) => (product.id === editingId ? payload : product));
-      }
-      return [payload, ...prev];
-    });
+    if (editingId) {
+      updateProduct(editingId, payload);
+    } else {
+      addProduct(payload);
+    }
 
     setForm({ name: '', price: '', category: categories[0], description: '', image: '' });
     setEditingId(null);
@@ -72,14 +79,31 @@ const RestaurantProductsScreen = () => {
       {
         text: 'Xóa',
         style: 'destructive',
-        onPress: () => setProducts((prev) => prev.filter((item) => item.id !== product.id))
+        onPress: () => deleteProduct(product.id)
       }
     ]);
   };
 
+  useEffect(() => {
+    if (!restaurantName) {
+      setProducts([]);
+      return;
+    }
+    setProducts(allProducts.filter((product) => product.restaurant === restaurantName));
+  }, [allProducts, restaurantName]);
+
   return (
     <Screen>
       <AppHeader title="Menu nhà hàng" subtitle="Quản lý món ăn dành riêng cho nhà hàng của bạn." />
+
+      {!restaurantName ? (
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionTitle}>Chưa gán nhà hàng</Text>
+          <Text style={styles.productMeta}>
+            Vui lòng liên hệ quản trị viên để gán tài khoản vào một nhà hàng trước khi quản lý món.
+          </Text>
+        </Card>
+      ) : null}
 
       <Card style={styles.formCard}>
         <Text style={styles.sectionTitle}>{editingId ? 'Cập nhật món' : 'Thêm món mới'}</Text>

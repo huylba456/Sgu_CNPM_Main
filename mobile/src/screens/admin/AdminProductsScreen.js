@@ -1,34 +1,69 @@
-import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Screen from '../../components/Screen';
 import AppHeader from '../../components/AppHeader';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Chip from '../../components/Chip';
 import { colors, spacing, typography } from '../../styles/theme';
-import { categories, products as seedProducts } from '../../data/mockProducts';
-
-const generateId = () => `p-${Math.random().toString(36).slice(2, 8)}`;
+import { useProducts } from '../../hooks/useProducts';
+import { useRestaurants } from '../../hooks/useRestaurants';
 
 const AdminProductsScreen = () => {
-  const [products, setProducts] = useState(seedProducts);
+  const { products, categories, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { restaurants } = useRestaurants();
   const [category, setCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     name: '',
     price: '',
     category: categories[0],
-    restaurant: '',
+    restaurant: restaurants[0]?.name ?? '',
     description: '',
     image: ''
   });
+  const [showRestaurantList, setShowRestaurantList] = useState(false);
 
-  const filtered = products.filter((product) => category === 'all' || product.category === category);
+  const filtered = products
+    .filter((product) => category === 'all' || product.category === category)
+    .filter((product) => {
+      const keyword = searchTerm.toLowerCase();
+      return (
+        !keyword ||
+        product.name.toLowerCase().includes(keyword) ||
+        product.restaurant.toLowerCase().includes(keyword)
+      );
+    })
+    .sort((a, b) => {
+      const direction = sortDirection === 'asc' ? 1 : -1;
+      if (sortKey === 'name') {
+        return a.name.localeCompare(b.name) * direction;
+      }
+      if (sortKey === 'price') {
+        return (a.price - b.price) * direction;
+      }
+      return 0;
+    });
 
   const resetForm = () => {
-    setForm({ name: '', price: '', category: categories[0], restaurant: '', description: '', image: '' });
+    setForm({
+      name: '',
+      price: '',
+      category: categories[0],
+      restaurant: restaurants[0]?.name ?? '',
+      description: '',
+      image: ''
+    });
     setEditingId(null);
+    setShowRestaurantList(false);
   };
+
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, restaurant: prev.restaurant || restaurants[0]?.name || '' }));
+  }, [restaurants]);
 
   const handleSubmit = () => {
     if (!form.name.trim() || !form.price) {
@@ -37,23 +72,19 @@ const AdminProductsScreen = () => {
     }
 
     const payload = {
-      id: editingId ?? generateId(),
       name: form.name.trim(),
       price: Number(form.price),
       category: form.category,
       restaurant: form.restaurant.trim() || 'FoodFast Restaurant',
       description: form.description.trim(),
-      image: form.image.trim() || seedProducts[0].image,
-      rating: 4.5,
-      deliveryTime: 12
+      image: form.image.trim()
     };
 
-    setProducts((prev) => {
-      if (editingId) {
-        return prev.map((item) => (item.id === editingId ? { ...item, ...payload } : item));
-      }
-      return [payload, ...prev];
-    });
+    if (editingId) {
+      updateProduct(editingId, payload);
+    } else {
+      addProduct(payload);
+    }
     resetForm();
   };
 
@@ -67,6 +98,7 @@ const AdminProductsScreen = () => {
       image: product.image
     });
     setEditingId(product.id);
+    setShowRestaurantList(false);
   };
 
   const handleDelete = (product) => {
@@ -75,7 +107,7 @@ const AdminProductsScreen = () => {
       {
         text: 'Xóa',
         style: 'destructive',
-        onPress: () => setProducts((prev) => prev.filter((item) => item.id !== product.id))
+        onPress: () => deleteProduct(product.id)
       }
     ]);
   };
@@ -102,13 +134,44 @@ const AdminProductsScreen = () => {
             value={form.price}
             onChangeText={(value) => setForm((prev) => ({ ...prev, price: value }))}
           />
-          <TextInput
-            style={[styles.input, styles.half]}
-            placeholder="Nhà hàng"
-            placeholderTextColor={colors.textMuted}
-            value={form.restaurant}
-            onChangeText={(value) => setForm((prev) => ({ ...prev, restaurant: value }))}
-          />
+          <View style={[styles.half, styles.dropdown]}> 
+            <Text style={styles.label}>Nhà hàng</Text>
+            <Pressable
+              style={styles.dropdownToggle}
+              onPress={() => setShowRestaurantList((prev) => !prev)}
+            >
+              <Text style={styles.dropdownValue} numberOfLines={1}>
+                {form.restaurant || 'Chọn nhà hàng'}
+              </Text>
+            </Pressable>
+            {showRestaurantList ? (
+              <View style={styles.dropdownList}>
+                {restaurants.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={[
+                      styles.dropdownOption,
+                      form.restaurant === item.name && styles.dropdownOptionActive
+                    ]}
+                    onPress={() => {
+                      setForm((prev) => ({ ...prev, restaurant: item.name }));
+                      setShowRestaurantList(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownOptionLabel,
+                        form.restaurant === item.name && styles.dropdownOptionLabelActive
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+          </View>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Danh mục</Text>
@@ -148,6 +211,23 @@ const AdminProductsScreen = () => {
           {categories.map((item) => (
             <Chip key={item} label={item} active={category === item} onPress={() => setCategory(item)} />
           ))}
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Tìm theo tên món hoặc nhà hàng"
+          placeholderTextColor={colors.textMuted}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+        />
+        <View style={styles.sortRow}>
+          <Text style={styles.label}>Sắp xếp theo:</Text>
+          <Chip label="Tên" active={sortKey === 'name'} onPress={() => setSortKey('name')} />
+          <Chip label="Giá" active={sortKey === 'price'} onPress={() => setSortKey('price')} />
+          <Button
+            label={sortDirection === 'asc' ? 'Tăng dần' : 'Giảm dần'}
+            variant="ghost"
+            onPress={() => setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+          />
         </View>
         {filtered.map((product) => (
           <View key={product.id} style={styles.productRow}>
@@ -197,6 +277,43 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginBottom: spacing.xs
   },
+  dropdown: {
+    gap: spacing.xs
+  },
+  dropdownToggle: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface
+  },
+  dropdownValue: {
+    color: colors.text,
+    fontWeight: '600'
+  },
+  dropdownList: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    marginTop: spacing.xs,
+    overflow: 'hidden'
+  },
+  dropdownOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  dropdownOptionActive: {
+    backgroundColor: colors.background
+  },
+  dropdownOptionLabel: {
+    color: colors.text
+  },
+  dropdownOptionLabelActive: {
+    color: colors.accent,
+    fontWeight: '700'
+  },
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -231,9 +348,17 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: '700'
   },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flexWrap: 'wrap'
+  },
   actions: {
     flexDirection: 'row',
-    gap: spacing.sm
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end'
   }
 });
 
