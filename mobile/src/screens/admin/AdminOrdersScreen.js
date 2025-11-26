@@ -19,7 +19,13 @@ const statuses = [
 
 const AdminOrdersScreen = () => {
   const navigation = useNavigation();
-  const { orders, drones, updateOrderStatus, assignDrone, addOrderNote } = useOrders();
+  const { orders, updateOrderStatus, addOrderNote } = useOrders();
+
+  const canUpdateToStatus = (current, target) => {
+    if (current === 'pending') return ['pending', 'preparing'].includes(target);
+    if (current === 'preparing') return ['preparing', 'shipping'].includes(target);
+    return target === current;
+  };
 
   return (
     <Screen>
@@ -40,7 +46,10 @@ const AdminOrdersScreen = () => {
                 key={status.value}
                 label={status.label}
                 active={order.status === status.value}
-                onPress={() => updateOrderStatus(order.id, status.value)}
+                onPress={() => {
+                  if (!canUpdateToStatus(order.status, status.value)) return;
+                  updateOrderStatus(order.id, status.value);
+                }}
               />
             ))}
           </View>
@@ -52,26 +61,6 @@ const AdminOrdersScreen = () => {
               value={order.note ?? ''}
               onChangeText={(value) => addOrderNote(order.id, value)}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Drone ID"
-              placeholderTextColor={colors.textMuted}
-              value={order.droneId ?? ''}
-              onChangeText={(value) => assignDrone(order.id, value)}
-            />
-          </View>
-          <View style={styles.dronesRow}>
-            <Text style={styles.metaText}>Drone gợi ý:</Text>
-            <View style={styles.chipRow}>
-              {drones.map((drone) => (
-                <Chip
-                  key={drone.id}
-                  label={`${drone.code ?? drone.id} (${drone.battery}%)`}
-                  active={order.droneId === drone.id}
-                  onPress={() => assignDrone(order.id, drone.id)}
-                />
-              ))}
-            </View>
           </View>
           <Button
             label="Xem chi tiết"
@@ -121,14 +110,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     color: colors.text,
     backgroundColor: colors.surface
-  },
-  dronesRow: {
-    gap: spacing.sm
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm
   }
 });
 

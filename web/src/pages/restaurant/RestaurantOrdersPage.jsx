@@ -25,6 +25,12 @@ const RestaurantOrdersPage = () => {
   }, [restaurants, user?.restaurantId, user?.restaurantName]);
   const [orders, setOrders] = useState([]);
 
+  const getAvailableStatuses = (current) => {
+    if (current === 'pending') return statuses.filter((status) => ['pending', 'preparing'].includes(status.value));
+    if (current === 'preparing') return statuses.filter((status) => ['preparing', 'shipping'].includes(status.value));
+    return statuses.filter((status) => status.value === current);
+  };
+
   const columns = useMemo(
     () => [
       { header: 'Mã đơn', accessorKey: 'id' },
@@ -34,13 +40,19 @@ const RestaurantOrdersPage = () => {
         cell: ({ row }) => `${row.original.total.toLocaleString()} đ`
       },
       {
+        header: 'Drone',
+        accessorKey: 'droneId',
+        cell: ({ row }) => row.original.droneId ?? 'Đang phân bổ'
+      },
+      {
         header: 'Trạng thái',
         cell: ({ row }) => (
           <select
             value={row.original.status}
             onChange={(event) => handleStatusChange(row.original.id, event.target.value)}
+            disabled={getAvailableStatuses(row.original.status).length <= 1}
           >
-            {statuses.map((status) => (
+            {getAvailableStatuses(row.original.status).map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>

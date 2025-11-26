@@ -24,6 +24,12 @@ const RestaurantOrdersScreen = () => {
     user?.restaurantId ?? restaurants.find((item) => item.name === user?.restaurantName)?.id ?? '';
   const restaurantOrders = orders.filter((order) => order.restaurantId === restaurantId);
 
+  const canUpdateToStatus = (current, target) => {
+    if (current === 'pending') return ['pending', 'preparing'].includes(target);
+    if (current === 'preparing') return ['preparing', 'shipping'].includes(target);
+    return target === current;
+  };
+
   return (
     <Screen>
       <AppHeader title="Đơn hàng nhà hàng" subtitle="Cập nhật trạng thái và ghi chú cho đơn hàng." />
@@ -44,13 +50,17 @@ const RestaurantOrdersScreen = () => {
             <Text style={styles.customer}>{order.customerName}</Text>
           </View>
           <Text style={styles.metaText}>Tổng: {order.total.toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.metaText}>Drone: {order.droneId ?? 'Đang phân bổ'}</Text>
           <View style={styles.statusRow}>
             {statuses.map((status) => (
               <Chip
                 key={status.value}
                 label={status.label}
                 active={order.status === status.value}
-                onPress={() => updateOrderStatus(order.id, status.value)}
+                onPress={() => {
+                  if (!canUpdateToStatus(order.status, status.value)) return;
+                  updateOrderStatus(order.id, status.value);
+                }}
               />
             ))}
           </View>

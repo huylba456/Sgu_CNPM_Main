@@ -37,6 +37,7 @@ export const OrdersProvider = ({ children }) => {
   }, []);
 
   const activeDrones = useMemo(() => drones.filter((drone) => drone.status === 'Hoạt động'), [drones]);
+  const pickRandom = (list) => list[Math.floor(Math.random() * list.length)];
 
   const resolveDocId = (list, id) => list.find((item) => item.id === id || item.code === id || item.docId === id)?.id ?? id;
 
@@ -53,8 +54,22 @@ export const OrdersProvider = ({ children }) => {
     const preferredDocId = normalizeDroneId(preferredId);
     if (preferredDocId && !inUse.has(preferredDocId)) return preferredDocId;
 
-    const available = activeDrones.find((drone) => !inUse.has(drone.id));
-    return available?.id ?? null;
+    const available = activeDrones.filter((drone) => !inUse.has(drone.id));
+    return available.length ? pickRandom(available)?.id ?? null : null;
+  };
+
+  const allowedTransitions = {
+    pending: ['pending', 'preparing', 'cancelled'],
+    preparing: ['preparing', 'shipping', 'cancelled'],
+    shipping: ['shipping', 'delivered'],
+    delivered: ['delivered'],
+    cancelled: ['cancelled']
+  };
+
+  const validateStatus = (currentStatus, requestedStatus) => {
+    if (!requestedStatus) return currentStatus;
+    const allowed = allowedTransitions[currentStatus] ?? [currentStatus];
+    return allowed.includes(requestedStatus) ? requestedStatus : currentStatus;
   };
 
   const generateId = () => `o-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -92,13 +107,14 @@ export const OrdersProvider = ({ children }) => {
     );
 
     const current = orders.find((order) => order.id === docId || order.code === id);
-    const shouldAssignDrone = status === 'shipping' && !current?.droneId;
+    const nextStatus = validateStatus(current?.status ?? 'pending', status);
+    const shouldAssignDrone = nextStatus === 'shipping' && !current?.droneId;
     const hasConflict = current?.droneId && shippingAssignments.has(current.droneId);
     const droneId = shouldAssignDrone || hasConflict
       ? reserveDroneId(orders.filter((order) => order.id !== docId), current?.droneId)
       : normalizeDroneId(current?.droneId);
 
-    await updateDoc(doc(db, 'orders', docId), { status, droneId });
+    await updateDoc(doc(db, 'orders', docId), { status: nextStatus, droneId });
   };
 
   const assignDrone = async (id, droneId) => {
@@ -164,3 +180,4 @@ export const OrdersProvider = ({ children }) => {
 
   return <OrdersContext.Provider value={value}>{children}</OrdersContext.Provider>;
 };
+  
