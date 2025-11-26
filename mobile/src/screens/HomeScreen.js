@@ -7,15 +7,16 @@ import ProductCard from '../components/ProductCard';
 import StatHighlight from '../components/StatHighlight';
 import Button from '../components/Button';
 import { colors, spacing, typography } from '../styles/theme';
-import { products } from '../data/mockProducts';
+import { useProducts } from '../hooks/useProducts';
 
 const HomeScreen = ({ navigation }) => {
+  const { products } = useProducts();
   const featuredProducts = useMemo(
     () =>
       [...products]
         .sort((a, b) => b.rating - a.rating)
         .slice(0, 6),
-    []
+    [products]
   );
 
   return (

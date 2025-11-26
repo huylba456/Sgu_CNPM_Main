@@ -6,6 +6,7 @@ import Chip from '../../components/Chip';
 import { colors, spacing, typography } from '../../styles/theme';
 import { useAuth } from '../../hooks/useAuth';
 import { useOrders } from '../../hooks/useOrders';
+import { useRestaurants } from '../../hooks/useRestaurants';
 
 const statuses = [
   { value: 'pending', label: 'Chờ xác nhận' },
@@ -18,11 +19,23 @@ const statuses = [
 const RestaurantOrdersScreen = () => {
   const { user } = useAuth();
   const { orders, updateOrderStatus, addOrderNote } = useOrders();
-  const restaurantOrders = orders.filter((order) => order.restaurantId === (user?.restaurantId ?? 'r1'));
+  const { restaurants } = useRestaurants();
+  const restaurantId =
+    user?.restaurantId ?? restaurants.find((item) => item.name === user?.restaurantName)?.id ?? '';
+  const restaurantOrders = orders.filter((order) => order.restaurantId === restaurantId);
 
   return (
     <Screen>
       <AppHeader title="Đơn hàng nhà hàng" subtitle="Cập nhật trạng thái và ghi chú cho đơn hàng." />
+
+      {restaurantId === '' ? (
+        <Card style={styles.orderCard}>
+          <Text style={styles.orderTitle}>Chưa gán nhà hàng</Text>
+          <Text style={styles.customer}>
+            Vui lòng liên hệ quản trị viên để được gán nhà hàng trước khi quản lý đơn.
+          </Text>
+        </Card>
+      ) : null}
 
       {restaurantOrders.map((order) => (
         <Card key={order.id} style={styles.orderCard}>

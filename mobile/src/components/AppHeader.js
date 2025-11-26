@@ -1,23 +1,18 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../styles/theme';
+import Stack from './Stack';
 
 const AppHeader = ({ title, subtitle, trailing }) => (
-  <View style={styles.container}>
+  <Stack direction="row" align="center" justify="space-between" gap={spacing.md}>
     <View style={styles.textContainer}>
       <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
     {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
-  </View>
+  </Stack>
 );
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md
-  },
   textContainer: {
     flex: 1
   },

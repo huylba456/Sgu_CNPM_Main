@@ -2,7 +2,8 @@ import { useCallback, useContext, useMemo } from 'react';
 import { OrdersContext } from '../context/OrdersContext';
 
 export const useOrders = () => {
-  const { orders, setOrders, updateOrderStatus, assignDrone, addOrderNote } = useContext(OrdersContext);
+  const { orders, drones, addOrder, updateOrderStatus, assignDrone, addOrderNote, addDrone, updateDrone, deleteDrone } =
+    useContext(OrdersContext);
 
   const getStats = useCallback(
     (source) => {
@@ -26,10 +27,14 @@ export const useOrders = () => {
 
   return {
     orders,
-    setOrders,
+    drones,
+    addOrder,
     updateOrderStatus,
     assignDrone,
     addOrderNote,
+    addDrone,
+    updateDrone,
+    deleteDrone,
     stats,
     getStats
   };
