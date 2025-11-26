@@ -1,14 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import DataTable from '../../components/DataTable.jsx';
-import { products as allProducts, categories } from '../../data/mockProducts.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import Modal from '../../components/Modal.jsx';
+import { useData } from '../../hooks/useData.js';
+import { useRestaurants } from '../../hooks/useRestaurants.js';
 
 const RestaurantProductsPage = () => {
   const { user } = useAuth();
-  const [products, setProducts] = useState(() =>
-    allProducts.filter((product) => product.restaurant === (user?.restaurantName ?? 'FastGrill Station'))
-  );
+  const { products: allProducts, categories, addProduct, updateProduct, deleteProduct } = useData();
+  const { restaurants } = useRestaurants();
+  const restaurantName = useMemo(() => {
+    if (user?.restaurantName) return user.restaurantName;
+    if (user?.restaurantId) {
+      return restaurants.find((item) => item.id === user.restaurantId)?.name ?? '';
+    }
+    return '';
+  }, [restaurants, user?.restaurantId, user?.restaurantName]);
+  const [products, setProducts] = useState([]);
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -27,7 +35,10 @@ const RestaurantProductsPage = () => {
       { header: 'Danh mục', accessorKey: 'category' },
       {
         header: 'Giá',
-        cell: ({ row }) => `${row.original.price.toLocaleString()} đ`
+        cell: ({ row }) => {
+          const price = Number(row.original.price ?? 0);
+          return `${Number.isFinite(price) ? price.toLocaleString() : '0'} đ`;
+        }
       },
       {
         header: 'Hành động',
@@ -58,16 +69,21 @@ const RestaurantProductsPage = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (!restaurantName) {
+      alert('Tài khoản chưa được gán nhà hàng. Vui lòng liên hệ quản trị viên.');
+      return;
+    }
     const payload = {
       ...form,
       price: Number(form.price),
-      restaurant: user?.restaurantName ?? 'FastGrill Station'
+      restaurant: restaurantName
     };
 
     if (editingId) {
-      setProducts((prev) => prev.map((item) => (item.id === editingId ? { ...payload, id: item.id } : item)));
+      updateProduct(editingId, payload);
     } else {
-      setProducts((prev) => [...prev, { ...payload, id: crypto.randomUUID() }]);
+      const newProduct = addProduct(payload);
+      setProducts((prev) => [...prev.filter((item) => item.id !== newProduct.id), newProduct]);
     }
     closeModal();
   };
@@ -84,7 +100,7 @@ const RestaurantProductsPage = () => {
 
   const handleDelete = () => {
     if (!productToDelete) return;
-    setProducts((prev) => prev.filter((item) => item.id !== productToDelete.id));
+    deleteProduct(productToDelete.id);
     if (editingId === productToDelete.id) {
       setEditingId(null);
       resetForm();
@@ -93,10 +109,12 @@ const RestaurantProductsPage = () => {
   };
 
   useEffect(() => {
-    if (user?.restaurantName) {
-      setProducts(allProducts.filter((product) => product.restaurant === user.restaurantName));
+    if (!restaurantName) {
+      setProducts([]);
+      return;
     }
-  }, [user?.restaurantName]);
+    setProducts(allProducts.filter((product) => product.restaurant === restaurantName));
+  }, [allProducts, restaurantName]);
 
   const resetForm = () =>
     setForm({ id: '', name: '', category: categories[0], price: 0, description: '', image: '' });
@@ -115,8 +133,11 @@ const RestaurantProductsPage = () => {
   return (
     <div className="page dashboard">
       <h2>Menu của nhà hàng</h2>
+      {!restaurantName ? (
+        <div className="alert warning">Tài khoản chưa được gán nhà hàng. Vui lòng liên hệ quản trị.</div>
+      ) : null}
       <div className="toolbar">
-        <button type="button" className="primary" onClick={handleCreate}>
+        <button type="button" className="primary" onClick={handleCreate} disabled={!restaurantName}>
           Thêm món mới
         </button>
       </div>

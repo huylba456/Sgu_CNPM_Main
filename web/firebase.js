@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// Firebase config bạn đã có
+
 const firebaseConfig = {
   apiKey: "AIzaSyA6nUavgaS6RdWbnBEP47K6kz98aOg_k0M",
   authDomain: "cnpm-eb8ca.firebaseapp.com",
@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// ❗ Quan trọng: export những cái bạn cần
+
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 

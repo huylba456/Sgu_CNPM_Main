@@ -1,18 +1,52 @@
 import { useEffect, useMemo, useState } from 'react';
-import { mockRoutes } from '../data/mockRoutes.js';
+import { useData } from '../hooks/useData.js';
+
+const fallbackRoutes = [
+  {
+    orderId: '#D-001',
+    restaurant: 'Drone Hub Bistro',
+    customer: 'Khách hàng',
+    points: [
+      { lat: 90, lng: 10 },
+      { lat: 70, lng: 30 },
+      { lat: 55, lng: 45 },
+      { lat: 35, lng: 65 },
+      { lat: 20, lng: 80 }
+    ]
+  }
+];
 
 const DroneTracker = () => {
+  const { orders } = useData();
   const [activeRouteIndex, setActiveRouteIndex] = useState(0);
   const [step, setStep] = useState(0);
 
-  const route = useMemo(() => mockRoutes[activeRouteIndex], [activeRouteIndex]);
+  const routes = useMemo(() => {
+    const shippingOrders = orders.filter((order) => order.status === 'shipping');
+    if (!shippingOrders.length) return fallbackRoutes;
+
+    return shippingOrders.map((order) => ({
+      orderId: `#${order.code ?? order.id}`,
+      restaurant: order.restaurant ?? order.restaurantName ?? order.items?.[0]?.restaurant ?? 'Nhà hàng',
+      customer: order.customerName ?? 'Khách hàng',
+      points: [
+        { lat: 90, lng: 10 },
+        { lat: 70, lng: 30 },
+        { lat: 55, lng: 45 },
+        { lat: 35, lng: 65 },
+        { lat: 20, lng: 80 }
+      ]
+    }));
+  }, [orders]);
+
+  const route = useMemo(() => routes[activeRouteIndex % routes.length], [activeRouteIndex, routes]);
   const progress = Math.min(100, Math.round(((step + 1) / route.points.length) * 100));
 
   useEffect(() => {
     const interval = setInterval(() => {
       setStep((prev) => {
         if (prev + 1 === route.points.length) {
-          setActiveRouteIndex((index) => (index + 1) % mockRoutes.length);
+          setActiveRouteIndex((index) => (index + 1) % routes.length);
           return 0;
         }
         return prev + 1;

@@ -3,7 +3,8 @@ import ProductCard from '../components/ProductCard.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import SortMenu from '../components/SortMenu.jsx';
 import CategoryFilter from '../components/CategoryFilter.jsx';
-import { categories, products } from '../data/mockProducts.js';
+import { useData } from '../hooks/useData.js';
+import { useRestaurants } from '../hooks/useRestaurants.js';
 
 const sortProducts = (list, sortKey) => {
   switch (sortKey) {
@@ -21,6 +22,8 @@ const sortProducts = (list, sortKey) => {
 };
 
 const ProductsPage = () => {
+  const { products, categories } = useData();
+  const { restaurants } = useRestaurants();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('featured');
   const [category, setCategory] = useState('all');
@@ -28,10 +31,16 @@ const ProductsPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 9;
 
-  const restaurants = useMemo(
-    () => Array.from(new Set(products.map((product) => product.restaurant))),
-    []
+  const restaurantOptions = useMemo(
+    () => ['all', ...restaurants.map((item) => item.name)],
+    [restaurants]
   );
+
+  useEffect(() => {
+    if (!restaurantOptions.includes(restaurant)) {
+      setRestaurant('all');
+    }
+  }, [restaurant, restaurantOptions]);
 
   const filteredItems = useMemo(() => {
     let list = products;
@@ -51,7 +60,7 @@ const ProductsPage = () => {
     }
 
     return sortProducts(list, sort);
-  }, [category, restaurant, search, sort]);
+  }, [category, products, restaurant, search, sort]);
 
   useEffect(() => {
     setPage(1);
@@ -82,7 +91,7 @@ const ProductsPage = () => {
           </div>
           <div className="filter-group">
             <span className="filter-label">Nhà hàng</span>
-            <CategoryFilter categories={restaurants} activeCategory={restaurant} onSelect={setRestaurant} />
+            <CategoryFilter categories={restaurantOptions} activeCategory={restaurant} onSelect={setRestaurant} />
           </div>
         </div>
       </header>

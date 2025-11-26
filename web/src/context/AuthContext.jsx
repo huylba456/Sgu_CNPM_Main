@@ -1,20 +1,44 @@
-import { createContext, useCallback, useMemo, useState } from 'react';
-import { users as seedUsers } from '../data/mockUsers.js';
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { addDoc, collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/config.js';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userList, setUserList] = useState(seedUsers);
+  const [userList, setUserList] = useState([]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const next = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+      setUserList(next);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const latest = userList.find((item) => item.id === user.id);
+    if (latest?.status === 'inactive') {
+      setUser(null);
+    } else if (latest) {
+      setUser(latest);
+    }
+  }, [user, userList]);
 
   const login = useCallback(
     (email, password) => {
       const found = userList.find((item) => item.email === email && item.password === password);
-      if (found) {
-        setUser(found);
-        return { success: true, user: found };
+      if (!found) {
+        return { success: false, message: 'Thông tin đăng nhập không chính xác' };
       }
-      return { success: false, message: 'Thông tin đăng nhập không chính xác' };
+      if (found.status === 'inactive') {
+        return { success: false, message: 'Tài khoản đã bị khóa' };
+      }
+
+      setUser(found);
+      return { success: true, user: found };
     },
     [userList]
   );
@@ -22,30 +46,39 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => setUser(null), []);
 
   const register = useCallback(
-    ({ name, email, password, phone = '', address = '' }) => {
+    async ({ name, email, password, phone = '', address = '' }) => {
       const isExisting = userList.some((item) => item.email === email);
       if (isExisting) {
         return { success: false, message: 'Email đã được đăng ký' };
       }
 
       const newUser = {
-        id: crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2, 11),
         name,
         email,
         password,
         role: 'customer',
         phone,
-        address
+        address,
+        status: 'active'
       };
 
-      setUserList((prev) => [...prev, newUser]);
-      setUser(newUser);
-      return { success: true, user: newUser };
+      const docRef = await addDoc(collection(db, 'users'), newUser);
+      const created = { ...newUser, id: docRef.id };
+      setUser(created);
+      return { success: true, user: created };
     },
     [userList]
   );
 
-  const value = useMemo(() => ({ user, login, logout, register }), [user, login, logout, register]);
+  const updateUser = useCallback(async (id, updates) => {
+    await updateDoc(doc(db, 'users', id), updates);
+    setUser((current) => (current?.id === id ? { ...current, ...updates } : current));
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, users: userList, setUserList, login, logout, register, updateUser }),
+    [user, userList, login, logout, register, updateUser]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

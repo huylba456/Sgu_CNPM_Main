@@ -145,6 +145,7 @@ const LoginPage = () => {
               <p>Customer: customer@foodfast.io / 123456</p>
               <p>Admin: admin@foodfast.io / admin</p>
               <p>Nhà hàng: restaurant@foodfast.io / restaurant</p>
+              <p>Nhà hàng 2: sushi@foodfast.io / sushi</p>
             </div>
           </>
         ) : (

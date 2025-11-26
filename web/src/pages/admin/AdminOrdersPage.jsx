@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import DataTable from '../../components/DataTable.jsx';
-import { initialOrders } from '../../data/mockOrders.js';
+import { useData } from '../../hooks/useData.js';
 
 const statuses = [
   { value: 'pending', label: 'Chờ xác nhận' },
@@ -11,18 +11,19 @@ const statuses = [
 ];
 
 const AdminOrdersPage = () => {
-  const [orders, setOrders] = useState(initialOrders);
+  const { orders, updateOrder } = useData();
   const [filters, setFilters] = useState({ status: 'all', search: '' });
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
+      const code = (order.code ?? order.id ?? '').toLowerCase();
       if (filters.status !== 'all' && order.status !== filters.status) {
         return false;
       }
       if (filters.search) {
         const keyword = filters.search.toLowerCase();
         return (
-          order.id.toLowerCase().includes(keyword) ||
+          code.includes(keyword) ||
           order.customerName.toLowerCase().includes(keyword) ||
           order.customerEmail.toLowerCase().includes(keyword)
         );
@@ -33,7 +34,7 @@ const AdminOrdersPage = () => {
 
   const columns = useMemo(
     () => [
-      { header: 'Mã đơn', accessorKey: 'id' },
+      { header: 'Mã đơn', cell: ({ row }) => row.original.code ?? row.original.id },
       { header: 'Khách hàng', accessorKey: 'customerName' },
       {
         header: 'Tổng tiền',
@@ -78,17 +79,11 @@ const AdminOrdersPage = () => {
     [filteredOrders]
   );
 
-  const handleStatusChange = (id, status) => {
-    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, status } : order)));
-  };
+  const handleStatusChange = (id, status) => updateOrder(id, { status });
 
-  const handleDroneAssign = (id, droneId) => {
-    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, droneId } : order)));
-  };
+  const handleDroneAssign = (id, droneId) => updateOrder(id, { droneId });
 
-  const handleNoteChange = (id, note) => {
-    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, note } : order)));
-  };
+  const handleNoteChange = (id, note) => updateOrder(id, { note });
 
   return (
     <div className="page dashboard">
