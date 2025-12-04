@@ -3,7 +3,7 @@
     "name": "FoodFast Mobile",
     "slug": "foodfast-mobile",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "jsEngine": "hermes",
     "assetBundlePatterns": ["**/*"],
     "ios": {

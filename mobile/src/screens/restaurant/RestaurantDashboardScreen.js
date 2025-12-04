@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Screen from '../../components/Screen';
 import AppHeader from '../../components/AppHeader';
@@ -12,6 +12,7 @@ import { statusLabels } from '../../constants/statusLabels';
 import Chip from '../../components/Chip';
 import Button from '../../components/Button';
 import { useRestaurants } from '../../hooks/useRestaurants';
+import { resolveProductImage } from '../../utils/resolveProductImage';
 
 const RestaurantDashboardScreen = () => {
   const { user } = useAuth();
@@ -211,6 +212,12 @@ const RestaurantDashboardScreen = () => {
       ) : assignedRestaurant ? (
         <>
           <AppHeader
+            layout="stacked"
+            leading={
+              restaurant ? (
+                <Image source={resolveProductImage(restaurant.image)} style={styles.restaurantLogo} />
+              ) : null
+            }
             title={restaurant.name}
             subtitle={`Drone pad: ${restaurant.dronePad} • Liên hệ: ${restaurant.contact}`}
           />
@@ -281,6 +288,14 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.subtitle,
     fontWeight: '600'
+  },
+  restaurantLogo: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border
   },
   panelMeta: {
     color: colors.textMuted
