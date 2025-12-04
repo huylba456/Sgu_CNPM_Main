@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import DataTable from '../../components/DataTable.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import Modal from '../../components/Modal.jsx';
@@ -14,7 +14,7 @@ const defaultRestaurantImage = '/images/foodfast-placeholder.svg';
 
 const AdminUsersPage = () => {
   const { users, setUserList } = useAuth();
-  const { restaurants, addRestaurant } = useRestaurants();
+  const { restaurants, addRestaurant, deleteRestaurant } = useRestaurants();
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -35,6 +35,9 @@ const AdminUsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [restaurantToDelete, setRestaurantToDelete] = useState(null);
+  const [restaurantDeleteError, setRestaurantDeleteError] = useState('');
+  const newRestaurantSectionRef = useRef(null);
 
   const filteredUsers = useMemo(() => {
     const keyword = searchTerm.toLowerCase();
@@ -90,6 +93,25 @@ const AdminUsersPage = () => {
     [users]
   );
 
+  const restaurantColumns = useMemo(
+    () => [
+      { header: 'Tên nhà hàng', accessorKey: 'name' },
+      { header: 'Địa chỉ', accessorKey: 'address' },
+      { header: 'Liên hệ', accessorKey: 'contact' },
+      {
+        header: 'Hành động',
+        cell: ({ row }) => (
+          <div className="table-actions">
+            <button type="button" className="danger" onClick={() => setRestaurantToDelete(row.original)}>
+              Xoá
+            </button>
+          </div>
+        )
+      }
+    ],
+    []
+  );
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     if (name === 'role' && value !== 'restaurant') {
@@ -130,6 +152,12 @@ const AdminUsersPage = () => {
       }
       return { ...prev, [name]: value };
     });
+  };
+
+  const scrollToNewRestaurantSection = () => {
+    if (newRestaurantSectionRef.current) {
+      newRestaurantSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleRestaurantImageChange = (event) => {
@@ -223,6 +251,23 @@ const AdminUsersPage = () => {
     setUserToDelete(null);
   };
 
+  const closeRestaurantModal = () => {
+    setRestaurantToDelete(null);
+    setRestaurantDeleteError('');
+  };
+
+  const handleDeleteRestaurant = async () => {
+    if (!restaurantToDelete) return;
+
+    try {
+      await deleteRestaurant(restaurantToDelete.id);
+      setRestaurantDeleteError('');
+      setRestaurantToDelete(null);
+    } catch (error) {
+      setRestaurantDeleteError(error.message ?? 'Không thể xóa nhà hàng.');
+    }
+  };
+
   const resetForm = () =>
     setForm({
       id: '',
@@ -287,6 +332,13 @@ const AdminUsersPage = () => {
         </button>
       </div>
       <DataTable columns={columns} data={filteredUsers} />
+      <section className="panel">
+        <div className="panel-header">
+          <h3>Danh sách nhà hàng</h3>
+          <p className="muted">Xóa nhà hàng sẽ được kiểm tra ràng buộc với món ăn và đơn hàng.</p>
+        </div>
+        <DataTable columns={restaurantColumns} data={restaurants} />
+      </section>
       {isModalOpen && (
         <Modal title={editingId ? 'Cập nhật người dùng' : 'Thêm người dùng'} onClose={closeModal}>
           <form className="form" onSubmit={handleSubmit}>
@@ -339,6 +391,12 @@ const AdminUsersPage = () => {
                 </label>
                 {form.restaurantId === 'new' ? (
                   <>
+                    <div className="form-row">
+                      <button type="button" className="ghost-button" onClick={scrollToNewRestaurantSection}>
+                        Cuộn xuống phần nhà hàng mới
+                      </button>
+                    </div>
+                    <div ref={newRestaurantSectionRef} />
                     <label className="form-field">
                       Tên nhà hàng mới
                       <input
@@ -409,6 +467,22 @@ const AdminUsersPage = () => {
             </button>
             <button type="button" className="danger" onClick={handleDelete}>
               Có, xóa người dùng
+            </button>
+          </div>
+        </Modal>
+      )}
+      {restaurantToDelete && (
+        <Modal title="Xóa nhà hàng" onClose={closeRestaurantModal}>
+          {restaurantDeleteError ? <div className="alert warning">{restaurantDeleteError}</div> : null}
+          <p>
+            Bạn có chắc chắn muốn xóa nhà hàng <strong>{restaurantToDelete.name}</strong> không?
+          </p>
+          <div className="modal-actions">
+            <button type="button" className="ghost-button" onClick={closeRestaurantModal}>
+              Không
+            </button>
+            <button type="button" className="danger" onClick={handleDeleteRestaurant}>
+              Có, xóa nhà hàng
             </button>
           </div>
         </Modal>

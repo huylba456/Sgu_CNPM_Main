@@ -1,5 +1,5 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
-import { addDoc, collection, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase/config.js';
 
 export const RestaurantContext = createContext();
@@ -32,7 +32,40 @@ export const RestaurantProvider = ({ children }) => {
     return { id: docRef.id, ...newRestaurant };
   };
 
-  const value = useMemo(() => ({ restaurants, addRestaurant }), [restaurants]);
+  const deleteRestaurant = async (id) => {
+    const restaurant = restaurants.find((item) => item.id === id);
+
+    if (!restaurant) {
+      throw new Error('Không tìm thấy nhà hàng để xóa.');
+    }
+
+    const [ordersSnapshot, productsByNameSnapshot, productsByIdSnapshot] = await Promise.all([
+      getDocs(query(collection(db, 'orders'), where('restaurantId', '==', id))),
+      getDocs(query(collection(db, 'products'), where('restaurant', '==', restaurant.name))),
+      getDocs(query(collection(db, 'products'), where('restaurantId', '==', id)))
+    ]);
+
+    const linkedProductIds = new Set([
+      ...productsByNameSnapshot.docs.map((doc) => doc.id),
+      ...productsByIdSnapshot.docs.map((doc) => doc.id)
+    ]);
+
+    const orderCount = ordersSnapshot.size;
+    const productCount = linkedProductIds.size;
+
+    if (orderCount || productCount) {
+      const issues = [];
+      if (orderCount) issues.push(`${orderCount} đơn hàng`);
+      if (productCount) issues.push(`${productCount} món ăn`);
+      throw new Error(
+        `Không thể xóa nhà hàng khi còn dữ liệu liên quan. Vui lòng xóa trước:\n${issues.join('\n')}`
+      );
+    }
+
+    await deleteDoc(doc(db, 'restaurants', id));
+  };
+
+  const value = useMemo(() => ({ restaurants, addRestaurant, deleteRestaurant }), [restaurants]);
 
   return <RestaurantContext.Provider value={value}>{children}</RestaurantContext.Provider>;
 };

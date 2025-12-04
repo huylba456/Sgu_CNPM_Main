@@ -20,7 +20,7 @@ const defaultRestaurantImage = 'foodfast-placeholder.svg';
 
 const AdminUsersScreen = () => {
   const { users, setUserList } = useAuth();
-  const { restaurants, addRestaurant } = useRestaurants();
+  const { restaurants, addRestaurant, deleteRestaurant } = useRestaurants();
   const [activeRole, setActiveRole] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState('name');
@@ -174,6 +174,27 @@ const AdminUsersScreen = () => {
     if (editingId === user.id) {
       setForm((prev) => ({ ...prev }));
     }
+  };
+
+  const handleDeleteRestaurant = (restaurant) => {
+    Alert.alert(
+      'Xóa nhà hàng',
+      `Bạn có chắc chắn muốn xóa ${restaurant.name}?`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xóa',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteRestaurant(restaurant.id);
+            } catch (error) {
+              Alert.alert('Không thể xóa', error.message ?? 'Vui lòng thử lại.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -380,6 +401,24 @@ const AdminUsersScreen = () => {
           </View>
         ))}
       </Card>
+
+      <Card style={styles.filterCard}>
+        <Text style={styles.sectionTitle}>Nhà hàng</Text>
+        {restaurants.length === 0 ? (
+          <Text style={styles.userMeta}>Chưa có nhà hàng nào được tạo.</Text>
+        ) : (
+          restaurants.map((restaurant) => (
+            <View key={restaurant.id} style={styles.restaurantRow}>
+              <View style={styles.restaurantInfo}>
+                <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                <Text style={styles.userMeta}>{restaurant.address || 'Chưa cập nhật địa chỉ'}</Text>
+                <Text style={styles.userMeta}>{restaurant.contact || 'Chưa có liên hệ'}</Text>
+              </View>
+              <Button label="Xóa" variant="ghost" onPress={() => handleDeleteRestaurant(restaurant)} />
+            </View>
+          ))
+        )}
+      </Card>
     </Screen>
   );
 };
@@ -448,6 +487,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flexWrap: 'wrap',
     justifyContent: 'flex-end'
+  },
+  restaurantRow: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm
+  },
+  restaurantInfo: {
+    gap: spacing.xs,
+    flex: 1
+  },
+  restaurantName: {
+    color: colors.text,
+    fontWeight: '600'
   }
 });
 
