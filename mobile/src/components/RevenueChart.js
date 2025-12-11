@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     minHeight: 8,
-    maxHeight: '100%'
+    maxHeight: '80%'
   },
   barLabel: {
     color: colors.textMuted,
