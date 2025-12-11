@@ -1,0 +1,70 @@
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chart-shell {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.revenue-chart {
+  width: 100%;
+  height: 240px;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0));
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+.revenue-line {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.5rem;
+}
+
+.chart-tick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1px dashed #e2e8f0;
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+
+.chart-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.chart-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.chart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  display: inline-block;
+}

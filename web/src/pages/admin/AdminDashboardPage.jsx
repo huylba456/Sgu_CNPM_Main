@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import StatsCard from '../../components/StatsCard.jsx';
 import DataTable from '../../components/DataTable.jsx';
+import RevenueChart from '../../components/RevenueChart.jsx';
 import { useData } from '../../hooks/useData.js';
 
 const AdminDashboardPage = () => {
@@ -148,6 +149,26 @@ const AdminDashboardPage = () => {
     return `${change >= 0 ? '+' : ''}${formatted}% so với 30 ngày trước`;
   }, [previousCustomerCount, recentCustomerCount]);
 
+  const monthlyHistory = useMemo(() => {
+    const points = [];
+    for (let i = 5; i >= 0; i -= 1) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const value = orders
+        .filter((order) => {
+          const placedDate = parsePlacedDate(order);
+          return placedDate >= start && placedDate < end;
+        })
+        .reduce((sum, order) => sum + Number(order.total ?? 0), 0);
+
+      points.push({
+        label: `${start.getMonth() + 1}/${start.getFullYear().toString().slice(-2)}`,
+        value
+      });
+    }
+    return points;
+  }, [now, orders]);
+
   return (
     <div className="page dashboard">
       <h2>Dashboard tổng quan</h2>
@@ -168,6 +189,7 @@ const AdminDashboardPage = () => {
           trend={customerTrend ?? '30 ngày gần nhất'}
         />
       </div>
+      <RevenueChart title="Xu hướng doanh thu" subtitle="6 tháng gần nhất" data={monthlyHistory} />
       <section className="panel">
         <h3>Đơn hàng gần nhất</h3>
         <div className="order-list compact">

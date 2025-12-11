@@ -6,6 +6,7 @@ import AppHeader from '../../components/AppHeader';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import StatHighlight from '../../components/StatHighlight';
+import RevenueChart from '../../components/RevenueChart';
 import { colors, spacing, typography } from '../../styles/theme';
 import { useOrders } from '../../hooks/useOrders';
 import { useProducts } from '../../hooks/useProducts';
@@ -120,6 +121,26 @@ const AdminDashboardScreen = () => {
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 4);
 
+  const monthlyHistory = useMemo(() => {
+    const points = [];
+    for (let i = 5; i >= 0; i -= 1) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const value = orders
+        .filter((order) => {
+          const placedDate = parsePlacedDate(order);
+          return placedDate >= start && placedDate < end;
+        })
+        .reduce((sum, order) => sum + Number(order.total ?? 0), 0);
+
+      points.push({
+        label: `${start.getMonth() + 1}/${start.getFullYear().toString().slice(-2)}`,
+        value
+      });
+    }
+    return points;
+  }, [now, orders]);
+
   return (
     <Screen>
       <AppHeader title="Dashboard tổng quan" subtitle="Theo dõi hiệu suất đội drone và đơn hàng trong ngày." />
@@ -144,6 +165,8 @@ const AdminDashboardScreen = () => {
         />
       </View>
 
+      <RevenueChart title="Xu hướng doanh thu" subtitle="6 tháng gần nhất" data={monthlyHistory} />
+
       <Card style={styles.panel}>
         <Text style={styles.panelTitle}>Tác vụ nhanh</Text>
         <View style={styles.actionGrid}>
@@ -166,6 +189,11 @@ const AdminDashboardScreen = () => {
             label="Đội drone"
             variant="ghost"
             onPress={() => navigation.navigate('AdminDrones')}
+          />
+          <Button
+            label="Nhà hàng"
+            variant="ghost"
+            onPress={() => navigation.navigate('AdminRestaurants')}
           />
         </View>
       </Card>

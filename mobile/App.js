@@ -28,6 +28,8 @@ import AdminProductsScreen from './src/screens/admin/AdminProductsScreen';
 import AdminOrdersScreen from './src/screens/admin/AdminOrdersScreen';
 import AdminUsersScreen from './src/screens/admin/AdminUsersScreen';
 import AdminDronesScreen from './src/screens/admin/AdminDronesScreen';
+import AdminRestaurantsScreen from './src/screens/admin/AdminRestaurantsScreen';
+import AdminRestaurantDetailScreen from './src/screens/admin/AdminRestaurantDetailScreen';
 import RestaurantDashboardScreen from './src/screens/restaurant/RestaurantDashboardScreen';
 import RestaurantProductsScreen from './src/screens/restaurant/RestaurantProductsScreen';
 import RestaurantOrdersScreen from './src/screens/restaurant/RestaurantOrdersScreen';
@@ -47,6 +49,12 @@ const AdminNavigator = () => (
     <AdminStack.Screen name="AdminOrders" component={AdminOrdersScreen} options={{ title: 'Đơn hàng' }} />
     <AdminStack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ title: 'Tài khoản' }} />
     <AdminStack.Screen name="AdminDrones" component={AdminDronesScreen} options={{ title: 'Đội drone' }} />
+    <AdminStack.Screen name="AdminRestaurants" component={AdminRestaurantsScreen} options={{ title: 'Nhà hàng' }} />
+    <AdminStack.Screen
+      name="AdminRestaurantDetail"
+      component={AdminRestaurantDetailScreen}
+      options={{ title: 'Chi tiết nhà hàng' }}
+    />
   </AdminStack.Navigator>
 );
 

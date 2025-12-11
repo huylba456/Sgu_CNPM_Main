@@ -25,6 +25,7 @@ const AdminLayout = () => {
           <NavLink to="/admin/drones">Drones</NavLink>
           <NavLink to="/admin/users">Người dùng</NavLink>
           <NavLink to="/admin/orders">Đơn hàng</NavLink>
+          <NavLink to="/admin/restaurants">Nhà hàng</NavLink>
         </nav>
       </aside>
       <section className="dashboard-content">
