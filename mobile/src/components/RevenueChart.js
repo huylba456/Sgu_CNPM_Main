@@ -17,20 +17,22 @@ const RevenueChart = ({ data = [], title, subtitle = '' }) => {
         </View>
       </View>
       {data.length ? (
-        <View style={styles.chartArea}>
-          <View style={styles.barRow}>
-            {data.map((item) => (
-              <View key={item.label} style={styles.barItem}>
-                <View
-                  style={[
-                    styles.bar,
-                    { height: `${(item.value / maxValue) * 100}%`, opacity: item.value ? 1 : 0.35 }
-                  ]}
-                />
-                <Text style={styles.barLabel}>{item.label}</Text>
-                <Text style={styles.barValue}>{item.value.toLocaleString('vi-VN')} đ</Text>
-              </View>
-            ))}
+        <View style={styles.chartFrame}>
+          <View style={styles.chartArea}>
+            <View style={styles.barRow}>
+              {data.map((item) => (
+                <View key={item.label} style={styles.barItem}>
+                  <View
+                    style={[
+                      styles.bar,
+                      { height: `${(item.value / maxValue) * 100}%`, opacity: item.value ? 1 : 0.35 }
+                    ]}
+                  />
+                  <Text style={styles.barLabel}>{item.label}</Text>
+                  <Text style={styles.barValue}>{item.value.toLocaleString('vi-VN')} đ</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       ) : (
@@ -78,27 +80,38 @@ const styles = StyleSheet.create({
     color: colors.textMuted
   },
   chartArea: {
-    height: 220,
+    height: '100%',
     justifyContent: 'flex-end'
+  },
+  chartFrame: {
+    height: 240,
+    backgroundColor: colors.background,
+    borderRadius: 14,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden'
   },
   barRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.xs,
-    height: '100%'
+    height: '100%',
+    paddingHorizontal: spacing.xs
   },
   barItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 4
+    gap: 6
   },
   bar: {
-    width: '60%',
+    width: '70%',
     backgroundColor: colors.primary,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
-    minHeight: 6,
+    minHeight: 8,
     maxHeight: '100%'
   },
   barLabel: {
