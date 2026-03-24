@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import DataTable from '../../components/DataTable.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import Modal from '../../components/Modal.jsx';
@@ -10,11 +10,9 @@ const roles = [
   { value: 'restaurant', label: 'Nhà hàng' }
 ];
 
-const defaultRestaurantImage = '/images/foodfast-placeholder.svg';
-
 const AdminUsersPage = () => {
   const { users, setUserList } = useAuth();
-  const { restaurants, addRestaurant, deleteRestaurant } = useRestaurants();
+  const { restaurants } = useRestaurants();
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -35,9 +33,6 @@ const AdminUsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-  const [restaurantToDelete, setRestaurantToDelete] = useState(null);
-  const [restaurantDeleteError, setRestaurantDeleteError] = useState('');
-  const newRestaurantSectionRef = useRef(null);
 
   const filteredUsers = useMemo(() => {
     const keyword = searchTerm.toLowerCase();
@@ -93,25 +88,6 @@ const AdminUsersPage = () => {
     [users]
   );
 
-  const restaurantColumns = useMemo(
-    () => [
-      { header: 'Tên nhà hàng', accessorKey: 'name' },
-      { header: 'Địa chỉ', accessorKey: 'address' },
-      { header: 'Liên hệ', accessorKey: 'contact' },
-      {
-        header: 'Hành động',
-        cell: ({ row }) => (
-          <div className="table-actions">
-            <button type="button" className="danger" onClick={() => setRestaurantToDelete(row.original)}>
-              Xoá
-            </button>
-          </div>
-        )
-      }
-    ],
-    []
-  );
-
   const handleChange = (event) => {
     const { name, value } = event.target;
     if (name === 'role' && value !== 'restaurant') {
@@ -138,33 +114,14 @@ const AdminUsersPage = () => {
       }
       if (name === 'restaurantId') {
         if (value === 'new') {
-          return {
-            ...prev,
-            restaurantId: 'new',
-            restaurantName: '',
-            newRestaurantName: '',
-            newRestaurantAddress: '',
-            newRestaurantImage: ''
-          };
+          alert('Hãy qua trang Quản lý nhà hàng để thêm nhà hàng.');
+          return prev;
         }
         const restaurant = restaurants.find((item) => item.id === value);
         return { ...prev, restaurantId: value, restaurantName: restaurant?.name ?? '', newRestaurantName: '' };
       }
       return { ...prev, [name]: value };
     });
-  };
-
-  const scrollToNewRestaurantSection = () => {
-    if (newRestaurantSectionRef.current) {
-      newRestaurantSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const handleRestaurantImageChange = (event) => {
-    const [file] = event.target.files;
-    if (file) {
-      setForm((prev) => ({ ...prev, newRestaurantImage: `/images/${file.name}` }));
-    }
   };
 
   const handleSubmit = (event) => {
@@ -175,8 +132,8 @@ const AdminUsersPage = () => {
       return alert('Vui lòng nhập mật khẩu cho tài khoản mới.');
     }
 
-    if (form.role === 'restaurant' && !form.restaurantId && !form.newRestaurantName.trim()) {
-      return alert('Vui lòng chọn hoặc tạo nhà hàng cho tài khoản này.');
+    if (form.role === 'restaurant' && !form.restaurantId) {
+      return alert('Vui lòng chọn nhà hàng cho tài khoản này.');
     }
 
     const password = form.password.trim();
@@ -195,18 +152,8 @@ const AdminUsersPage = () => {
         )
       );
     } else {
-      let restaurantId = form.restaurantId;
-      let restaurantName = form.restaurantName;
-
-      if (form.role === 'restaurant' && (restaurantId === 'new' || !restaurantId)) {
-        const created = addRestaurant({
-          name: form.newRestaurantName || form.restaurantName,
-          address: form.newRestaurantAddress,
-          image: form.newRestaurantImage || defaultRestaurantImage
-        });
-        restaurantId = created.id;
-        restaurantName = created.name;
-      }
+      const restaurantId = form.restaurantId;
+      const restaurantName = form.restaurantName;
 
       const selectedRestaurant = restaurants.find((item) => item.id === restaurantId);
       const newUser = {
@@ -249,23 +196,6 @@ const AdminUsersPage = () => {
       resetForm();
     }
     setUserToDelete(null);
-  };
-
-  const closeRestaurantModal = () => {
-    setRestaurantToDelete(null);
-    setRestaurantDeleteError('');
-  };
-
-  const handleDeleteRestaurant = async () => {
-    if (!restaurantToDelete) return;
-
-    try {
-      await deleteRestaurant(restaurantToDelete.id);
-      setRestaurantDeleteError('');
-      setRestaurantToDelete(null);
-    } catch (error) {
-      setRestaurantDeleteError(error.message ?? 'Không thể xóa nhà hàng.');
-    }
   };
 
   const resetForm = () =>
@@ -332,13 +262,6 @@ const AdminUsersPage = () => {
         </button>
       </div>
       <DataTable columns={columns} data={filteredUsers} />
-      <section className="panel">
-        <div className="panel-header">
-          <h3>Danh sách nhà hàng</h3>
-          <p className="muted">Xóa nhà hàng sẽ được kiểm tra ràng buộc với món ăn và đơn hàng.</p>
-        </div>
-        <DataTable columns={restaurantColumns} data={restaurants} />
-      </section>
       {isModalOpen && (
         <Modal title={editingId ? 'Cập nhật người dùng' : 'Thêm người dùng'} onClose={closeModal}>
           <form className="form" onSubmit={handleSubmit}>
@@ -389,50 +312,6 @@ const AdminUsersPage = () => {
                     ))}
                   </select>
                 </label>
-                {form.restaurantId === 'new' ? (
-                  <>
-                    <div className="form-row">
-                      <button type="button" className="ghost-button" onClick={scrollToNewRestaurantSection}>
-                        Cuộn xuống phần nhà hàng mới
-                      </button>
-                    </div>
-                    <div ref={newRestaurantSectionRef} />
-                    <label className="form-field">
-                      Tên nhà hàng mới
-                      <input
-                        name="newRestaurantName"
-                        value={form.newRestaurantName}
-                        onChange={handleChange}
-                        placeholder="Nhập tên nhà hàng"
-                        required
-                      />
-                    </label>
-                      <label className="form-field">
-                        Địa chỉ nhà hàng (tuỳ chọn)
-                        <input
-                          name="newRestaurantAddress"
-                          value={form.newRestaurantAddress}
-                          onChange={handleChange}
-                          placeholder="Địa chỉ hoặc khu vực phục vụ"
-                        />
-                      </label>
-                    <label className="form-field file-upload">
-                      Ảnh nhà hàng
-                      <div className="file-upload-control">
-                        <label htmlFor="admin-restaurant-image" className="upload-button">
-                          Upload
-                        </label>
-                        <span>{form.newRestaurantImage ? form.newRestaurantImage.split('/').pop() : 'Chưa có tệp'}</span>
-                        <input
-                          id="admin-restaurant-image"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleRestaurantImageChange}
-                        />
-                      </div>
-                    </label>
-                  </>
-                ) : null}
               </>
             ) : null}
             <label className="form-field">
@@ -467,22 +346,6 @@ const AdminUsersPage = () => {
             </button>
             <button type="button" className="danger" onClick={handleDelete}>
               Có, xóa người dùng
-            </button>
-          </div>
-        </Modal>
-      )}
-      {restaurantToDelete && (
-        <Modal title="Xóa nhà hàng" onClose={closeRestaurantModal}>
-          {restaurantDeleteError ? <div className="alert warning">{restaurantDeleteError}</div> : null}
-          <p>
-            Bạn có chắc chắn muốn xóa nhà hàng <strong>{restaurantToDelete.name}</strong> không?
-          </p>
-          <div className="modal-actions">
-            <button type="button" className="ghost-button" onClick={closeRestaurantModal}>
-              Không
-            </button>
-            <button type="button" className="danger" onClick={handleDeleteRestaurant}>
-              Có, xóa nhà hàng
             </button>
           </div>
         </Modal>

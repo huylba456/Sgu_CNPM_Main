@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import Screen from '../components/Screen';
 import AppHeader from '../components/AppHeader';
 import Card from '../components/Card';
@@ -10,6 +10,43 @@ import { useOrders } from '../hooks/useOrders';
 import { statusLabels } from '../constants/statusLabels';
 import { useAuth } from '../hooks/useAuth';
 import { useRestaurants } from '../hooks/useRestaurants';
+
+const defaultPosition = { lat: 10.776889, lng: 106.700806 };
+
+const coordinatesByAddress = {
+  'Vinhomes Grand Park': { lat: 10.843018, lng: 106.828537 },
+  'Landmark 81': { lat: 10.794167, lng: 106.722222 },
+  'Thủ Thiêm Eco': { lat: 10.781135, lng: 106.730743 },
+  'Sala Đại Quang Minh': { lat: 10.780379, lng: 106.716589 },
+  'Thảo Điền, TP. Thủ Đức': { lat: 10.802101, lng: 106.737743 },
+  'Quận 1, TP. HCM': { lat: 10.776889, lng: 106.700806 }
+};
+
+const normalizePosition = (position) => {
+  if (position?.lat && position?.lng) return position;
+  return defaultPosition;
+};
+
+const buildStaticMapUrl = (start, end) => {
+  const safeStart = normalizePosition(start);
+  const safeEnd = normalizePosition(end);
+  const center = {
+    lat: (safeStart.lat + safeEnd.lat) / 2,
+    lng: (safeStart.lng + safeEnd.lng) / 2
+  };
+
+  const params = new URLSearchParams({
+    center: `${center.lat},${center.lng}`,
+    zoom: '13',
+    size: '640x360',
+    scale: '2'
+  });
+
+  params.append('markers', `${safeStart.lat},${safeStart.lng},lightblue1|${safeEnd.lat},${safeEnd.lng},red`);
+  params.append('path', `weight:4|color:0x2563ebff|${safeStart.lat},${safeStart.lng}|${safeEnd.lat},${safeEnd.lng}`);
+
+  return `https://staticmap.openstreetmap.de/staticmap.php?${params.toString()}`;
+};
 
 const OrderDetailScreen = ({ route, navigation }) => {
   const { orderId } = route.params ?? {};
@@ -30,20 +67,19 @@ const OrderDetailScreen = ({ route, navigation }) => {
   }
 
   const restaurant = restaurants.find((item) => item.id === order.restaurantId);
-  const routeInfo = useMemo(
-    () => ({
-      restaurant: restaurant?.name ?? 'Đang cập nhật',
-      customer: order.customerName ?? 'Khách hàng',
-      points: [
-        { lat: 90, lng: 10 },
-        { lat: 70, lng: 30 },
-        { lat: 55, lng: 45 },
-        { lat: 35, lng: 65 },
-        { lat: 20, lng: 80 }
-      ]
-    }),
-    [order.customerName, restaurant?.name]
+  const restaurantPosition = useMemo(
+    () => coordinatesByAddress[restaurant?.address] ?? defaultPosition,
+    [restaurant?.address]
   );
+  const deliveryPosition = useMemo(() => {
+    const address = order.deliveryAddress ?? order.customerAddress;
+    return normalizePosition(order.deliveryCoordinates ?? coordinatesByAddress[address]);
+  }, [order.customerAddress, order.deliveryAddress, order.deliveryCoordinates]);
+  const routeMapUrl = useMemo(
+    () => buildStaticMapUrl(restaurantPosition, deliveryPosition),
+    [deliveryPosition, restaurantPosition]
+  );
+
   const canCancel = user?.role === 'customer' && order.status === 'pending';
   const canAdvance =
     user && (user.role === 'admin' || user.role === 'restaurant') && ['pending', 'preparing'].includes(order.status);
@@ -156,19 +192,25 @@ const OrderDetailScreen = ({ route, navigation }) => {
         </View>
       </Card>
 
-      {routeInfo ? (
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Lộ trình bay dự kiến</Text>
-          <Text style={styles.routeText}>Từ: {routeInfo.restaurant}</Text>
-          <Text style={styles.routeText}>Đến: {routeInfo.customer}</Text>
-          <Text style={styles.routeText}>Điểm trung gian:</Text>
-          {routeInfo.points.map((point, index) => (
-            <Text key={`${point.lat}-${point.lng}`} style={styles.routePoint}>
-              • Vĩ độ {point.lat}, Kinh độ {point.lng}
-            </Text>
-          ))}
-        </Card>
-      ) : null}
+      <Card style={styles.section}>
+        <Text style={styles.sectionTitle}>Lộ trình bay dự kiến</Text>
+        <Text style={styles.routeText}>
+          Drone rời {restaurant?.name ?? 'nhà hàng'} để tới {order.deliveryAddress ?? order.customerAddress ?? 'điểm giao hàng'}.
+        </Text>
+        <View style={styles.mapContainer}>
+          <Image source={{ uri: routeMapUrl }} style={styles.mapImage} />
+        </View>
+        <View style={styles.routeLegend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+            <Text style={styles.legendLabel}>Điểm xuất phát</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.accent }]} />
+            <Text style={styles.legendLabel}>Điểm giao hàng</Text>
+          </View>
+        </View>
+      </Card>
 
       {user?.role === 'customer' && order.status === 'shipping' ? (
         <Card style={styles.section}>
@@ -238,16 +280,40 @@ const styles = StyleSheet.create({
     fontSize: typography.body
   },
   totalValue: {
-    color: colors.accent,
-    fontSize: 22,
-    fontWeight: '700'
+   color: colors.accent,
+   fontSize: 22,
+   fontWeight: '700'
   },
   routeText: {
     color: colors.textMuted
   },
-  routePoint: {
-    color: colors.text,
-    marginLeft: spacing.md
+  mapContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  mapImage: {
+    width: '100%',
+    height: 220,
+    backgroundColor: colors.surfaceAlt
+  },
+  routeLegend: {
+    flexDirection: 'row',
+    gap: spacing.md
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6
+  },
+  legendLabel: {
+    color: colors.text
   },
   arrivalRow: {
     gap: spacing.sm

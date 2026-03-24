@@ -21,11 +21,12 @@ const AdminLayout = () => {
           <NavLink to="/admin" end>
             Dashboard
           </NavLink>
-          <NavLink to="/admin/products">Sản phẩm</NavLink>
-          <NavLink to="/admin/drones">Drones</NavLink>
-          <NavLink to="/admin/users">Người dùng</NavLink>
-          <NavLink to="/admin/orders">Đơn hàng</NavLink>
-          <NavLink to="/admin/restaurants">Nhà hàng</NavLink>
+          <NavLink to="/admin/products">Quản lý món</NavLink>
+          <NavLink to="/admin/drones">Quản lý Drones</NavLink>
+          <NavLink to="/admin/users">Quản lý tài khoản</NavLink>
+          <NavLink to="/admin/orders">Quản lý đơn hàng</NavLink>
+          <NavLink to="/admin/restaurant-manage">Quản lý nhà hàng</NavLink>
+          <NavLink to="/admin/restaurants">Doanh thu nhà hàng</NavLink>
         </nav>
       </aside>
       <section className="dashboard-content">

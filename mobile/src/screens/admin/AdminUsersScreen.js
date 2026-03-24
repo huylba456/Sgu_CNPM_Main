@@ -16,11 +16,10 @@ const roles = [
 ];
 
 const generateId = () => `u-${Math.random().toString(36).slice(2, 8)}`;
-const defaultRestaurantImage = 'foodfast-placeholder.svg';
 
 const AdminUsersScreen = () => {
   const { users, setUserList } = useAuth();
-  const { restaurants, addRestaurant, deleteRestaurant } = useRestaurants();
+  const { restaurants } = useRestaurants();
   const [activeRole, setActiveRole] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState('name');
@@ -96,7 +95,7 @@ const AdminUsersScreen = () => {
       return;
     }
 
-    if (form.role === 'restaurant' && !form.restaurantId && !form.newRestaurantName.trim()) {
+    if (form.role === 'restaurant' && !form.restaurantId) {
       Alert.alert('Chọn nhà hàng', 'Vui lòng gán một nhà hàng cho tài khoản này.');
       return;
     }
@@ -122,18 +121,8 @@ const AdminUsersScreen = () => {
         prev.map((item) => (item.id === editingId ? { ...item, ...payload } : item))
       );
     } else {
-      let restaurantId = payload.restaurantId;
-      let restaurantName = payload.restaurantName;
-
-      if (payload.role === 'restaurant' && (restaurantId === 'new' || !restaurantId)) {
-        const created = addRestaurant({
-          name: form.newRestaurantName || form.restaurantName,
-          address: form.newRestaurantAddress,
-          image: form.newRestaurantImage || defaultRestaurantImage
-        });
-        restaurantId = created.id;
-        restaurantName = created.name;
-      }
+      const restaurantId = payload.restaurantId;
+      const restaurantName = payload.restaurantName;
 
       setUserList((prev) => [
         ...prev,
@@ -174,27 +163,6 @@ const AdminUsersScreen = () => {
     if (editingId === user.id) {
       setForm((prev) => ({ ...prev }));
     }
-  };
-
-  const handleDeleteRestaurant = (restaurant) => {
-    Alert.alert(
-      'Xóa nhà hàng',
-      `Bạn có chắc chắn muốn xóa ${restaurant.name}?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteRestaurant(restaurant.id);
-            } catch (error) {
-              Alert.alert('Không thể xóa', error.message ?? 'Vui lòng thử lại.');
-            }
-          }
-        }
-      ]
-    );
   };
 
   return (
@@ -294,45 +262,14 @@ const AdminUsersScreen = () => {
                     }
                   />
                 ))}
-                <Chip
+                {/* <Chip
                   label="+ Thêm nhà hàng mới"
-                  active={form.restaurantId === 'new'}
+                  active={false}
                   onPress={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      restaurantId: 'new',
-                      restaurantName: '',
-                      newRestaurantName: '',
-                      newRestaurantAddress: ''
-                    }))
+                    Alert.alert('Thông báo', 'Hãy qua trang Quản lý nhà hàng để thêm nhà hàng.')
                   }
-                />
+                /> */}
               </View>
-              {form.restaurantId === 'new' ? (
-                <>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Tên nhà hàng mới"
-                    placeholderTextColor={colors.textMuted}
-                    value={form.newRestaurantName}
-                    onChangeText={(value) => setForm((prev) => ({ ...prev, newRestaurantName: value }))}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Địa chỉ nhà hàng (tuỳ chọn)"
-                    placeholderTextColor={colors.textMuted}
-                    value={form.newRestaurantAddress}
-                    onChangeText={(value) => setForm((prev) => ({ ...prev, newRestaurantAddress: value }))}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Tải lên URL ảnh nhà hàng (trống sẽ dùng logo FoodFast)"
-                    placeholderTextColor={colors.textMuted}
-                    value={form.newRestaurantImage}
-                    onChangeText={(value) => setForm((prev) => ({ ...prev, newRestaurantImage: value }))}
-                  />
-                </>
-              ) : null}
             </View>
           ) : null}
         <TextInput
@@ -400,24 +337,6 @@ const AdminUsersScreen = () => {
             </View>
           </View>
         ))}
-      </Card>
-
-      <Card style={styles.filterCard}>
-        <Text style={styles.sectionTitle}>Nhà hàng</Text>
-        {restaurants.length === 0 ? (
-          <Text style={styles.userMeta}>Chưa có nhà hàng nào được tạo.</Text>
-        ) : (
-          restaurants.map((restaurant) => (
-            <View key={restaurant.id} style={styles.restaurantRow}>
-              <View style={styles.restaurantInfo}>
-                <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                <Text style={styles.userMeta}>{restaurant.address || 'Chưa cập nhật địa chỉ'}</Text>
-                <Text style={styles.userMeta}>{restaurant.contact || 'Chưa có liên hệ'}</Text>
-              </View>
-              <Button label="Xóa" variant="ghost" onPress={() => handleDeleteRestaurant(restaurant)} />
-            </View>
-          ))
-        )}
       </Card>
     </Screen>
   );
@@ -487,25 +406,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flexWrap: 'wrap',
     justifyContent: 'flex-end'
-  },
-  restaurantRow: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm
-  },
-  restaurantInfo: {
-    gap: spacing.xs,
-    flex: 1
-  },
-  restaurantName: {
-    color: colors.text,
-    fontWeight: '600'
   }
 });
 

@@ -18,6 +18,7 @@ import AdminOrdersPage from './pages/admin/AdminOrdersPage.jsx';
 import AdminDronesPage from './pages/admin/AdminDronesPage.jsx';
 import AdminRestaurantsPage from './pages/admin/AdminRestaurantsPage.jsx';
 import AdminRestaurantDetailPage from './pages/admin/AdminRestaurantDetailPage.jsx';
+import AdminRestaurantManagePage from './pages/admin/AdminRestaurantManagePage.jsx';
 import RestaurantDashboardPage from './pages/restaurant/RestaurantDashboardPage.jsx';
 import RestaurantProductsPage from './pages/restaurant/RestaurantProductsPage.jsx';
 import RestaurantOrdersPage from './pages/restaurant/RestaurantOrdersPage.jsx';
@@ -99,6 +100,7 @@ function App() {
         <Route path="drones" element={<AdminDronesPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="restaurant-manage" element={<AdminRestaurantManagePage />} />
         <Route path="restaurants" element={<AdminRestaurantsPage />} />
         <Route path="restaurants/:id" element={<AdminRestaurantDetailPage />} />
       </Route>

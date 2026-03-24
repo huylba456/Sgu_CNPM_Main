@@ -176,7 +176,7 @@ const AdminDashboardScreen = () => {
             onPress={() => navigation.navigate('AdminProducts')}
           />
           <Button
-            label="Quản lý đơn"
+            label="Quản lý đơn hàng"
             variant="ghost"
             onPress={() => navigation.navigate('AdminOrders')}
           />
@@ -186,12 +186,17 @@ const AdminDashboardScreen = () => {
             onPress={() => navigation.navigate('AdminUsers')}
           />
           <Button
-            label="Đội drone"
+            label="Quản lý drone"
             variant="ghost"
             onPress={() => navigation.navigate('AdminDrones')}
           />
           <Button
-            label="Nhà hàng"
+            label="Quản lý nhà hàng"
+            variant="ghost"
+            onPress={() => navigation.navigate('AdminRestaurantManage')}
+          />
+          <Button
+            label="Doanh thu nhà hàng"
             variant="ghost"
             onPress={() => navigation.navigate('AdminRestaurants')}
           />

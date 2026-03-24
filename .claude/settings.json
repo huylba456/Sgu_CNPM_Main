@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-ChildItem -Path ''d:\\\\Hoc\\\\CNPM\\\\Sgu_CNPM_Main'' -Recurse -File | Where-Object { $_FullName -notlike ''*node_modules*'' -and $_FullName -notlike ''*.git*'' -and $_Name -match ''prd|requirement|spec|document|design'' } | Select-Object -ExpandProperty FullName\")",
+      "Read(//d/Hoc/CNPM/**)",
+      "Read(//mnt/d/Hoc/CNPM/Sgu_CNPM_Main/mobile/src/screens/**)"
+    ]
+  }
+}

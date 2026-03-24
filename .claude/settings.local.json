@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s /b d:HocCNPMSgu_CNPM_Main)",
+      "Bash(findstr /i \"prd\\\\|requirement\\\\|specs\\\\|spec\\\\|document\\\\|design\")",
+      "Bash(findstr /v \"node_modules\")",
+      "Bash(findstr /v \".git\")",
+      "Bash(cmd /c \"dir /s /b \"\"d:\\\\Hoc\\\\CNPM\\\\Sgu_CNPM_Main\"\" 2>nul\")",
+      "Bash(cmd /c findstr /v \"node_modules\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''d:\\\\Hoc\\\\CNPM\\\\Sgu_CNPM_Main'' -Recurse -File | Where-Object { $_FullName -notlike ''*node_modules*'' -and $_FullName -notlike ''*.git*'' } | Select-Object -ExpandProperty FullName\")"
+    ]
+  }
+}
