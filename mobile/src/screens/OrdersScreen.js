@@ -106,9 +106,9 @@ const OrdersScreen = ({ navigation }) => {
                 ))}
               </Stack>
 
-              <Stack direction="row" justify="space-between" align="center">
+              <Stack direction="row" justify="space-between" align="center" wrap>
                 <Text style={styles.total}>Tổng: {order.total.toLocaleString('vi-VN')} đ</Text>
-                <Stack direction="row" wrap gap={spacing.sm} justify="flex-end">
+                <Stack direction="row" gap={spacing.sm}>
                   <Button
                     label="Xem chi tiết"
                     variant="ghost"

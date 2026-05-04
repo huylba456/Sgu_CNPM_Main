@@ -134,7 +134,7 @@ const AdminProductsScreen = () => {
             value={form.price}
             onChangeText={(value) => setForm((prev) => ({ ...prev, price: value }))}
           />
-          <View style={[styles.half, styles.dropdown]}> 
+          <View style={[styles.half, styles.dropdown]}>
             <Text style={styles.label}>Nhà hàng</Text>
             <Pressable
               style={styles.dropdownToggle}
@@ -144,35 +144,35 @@ const AdminProductsScreen = () => {
                 {form.restaurant || 'Chọn nhà hàng'}
               </Text>
             </Pressable>
-            {showRestaurantList ? (
-              <View style={styles.dropdownList}>
-                {restaurants.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    style={[
-                      styles.dropdownOption,
-                      form.restaurant === item.name && styles.dropdownOptionActive
-                    ]}
-                    onPress={() => {
-                      setForm((prev) => ({ ...prev, restaurant: item.name }));
-                      setShowRestaurantList(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownOptionLabel,
-                        form.restaurant === item.name && styles.dropdownOptionLabelActive
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {item.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
           </View>
         </View>
+        {showRestaurantList ? (
+          <View style={styles.dropdownList}>
+            {restaurants.map((item) => (
+              <Pressable
+                key={item.id}
+                style={[
+                  styles.dropdownOption,
+                  form.restaurant === item.name && styles.dropdownOptionActive
+                ]}
+                onPress={() => {
+                  setForm((prev) => ({ ...prev, restaurant: item.name }));
+                  setShowRestaurantList(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.dropdownOptionLabel,
+                    form.restaurant === item.name && styles.dropdownOptionLabelActive
+                  ]}
+                  numberOfLines={1}
+                >
+                  {item.name}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
         <View style={styles.row}>
           <Text style={styles.label}>Danh mục</Text>
           <View style={styles.categoryRow}>
@@ -297,7 +297,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 12,
     backgroundColor: colors.surface,
-    marginTop: spacing.xs,
     overflow: 'hidden'
   },
   dropdownOption: {
