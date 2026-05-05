@@ -8,6 +8,7 @@ import RevenueChart from '../../components/RevenueChart';
 import { colors, spacing, typography } from '../../styles/theme';
 import { useRestaurants } from '../../hooks/useRestaurants';
 import { useOrders } from '../../hooks/useOrders';
+import { statusLabels } from '../../constants/statusLabels';
 import Button from '../../components/Button';
 
 const AdminRestaurantDetailScreen = () => {
@@ -100,19 +101,24 @@ const AdminRestaurantDetailScreen = () => {
       <Card style={styles.orderCard}>
         <Text style={styles.sectionTitle}>Đơn hàng gần nhất</Text>
         <View style={styles.orderList}>
-          {relatedOrders.slice(0, 6).map((order) => (
-            <View key={order.id} style={styles.orderRow}>
-              <View>
-                <Text style={styles.orderTitle}>Đơn {order.code ?? order.id}</Text>
+          {relatedOrders.length === 0 ? (
+            <Text style={styles.muted}>Chưa có đơn hàng nào.</Text>
+          ) : (
+            relatedOrders.slice(0, 6).map((order) => (
+              <View key={order.id} style={styles.historyCard}>
+                <View style={styles.historyHeader}>
+                  <Text style={styles.orderTitle}>Đơn {order.code ?? order.id}</Text>
+                  <Text style={[styles.statusBadge, styles[`status_${order.status}`]]}>
+                    {statusLabels[order.status] ?? order.status}
+                  </Text>
+                </View>
                 <Text style={styles.muted}>Khách: {order.customerName ?? 'Ẩn danh'}</Text>
-                <Text style={styles.status}>{order.status}</Text>
+                <Text style={styles.muted}>
+                  Tổng tiền: {Number(order.total ?? 0).toLocaleString('vi-VN')} đ • {parsePlacedDate(order).toLocaleDateString('vi-VN')}
+                </Text>
               </View>
-              <View style={styles.orderMeta}>
-                <Text style={styles.highlight}>{Number(order.total ?? 0).toLocaleString('vi-VN')} đ</Text>
-                <Text style={styles.muted}>{parsePlacedDate(order).toLocaleDateString('vi-VN')}</Text>
-              </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       </Card>
     </Screen>
@@ -152,25 +158,50 @@ const styles = StyleSheet.create({
   orderList: {
     gap: spacing.sm
   },
-  orderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  historyCard: {
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: spacing.sm,
-    gap: spacing.sm
+    borderRadius: 16,
+    gap: spacing.xs,
+    backgroundColor: colors.surface
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
   orderTitle: {
     color: colors.text,
-    fontWeight: '700'
+    fontWeight: '600'
   },
-  orderMeta: {
-    alignItems: 'flex-end'
+  statusBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 999,
+    fontSize: typography.small,
+    overflow: 'hidden',
+    color: colors.text
   },
-  status: {
-    color: colors.textMuted
+  status_pending: {
+    backgroundColor: 'rgba(250,204,21,0.2)',
+    color: colors.warning
+  },
+  status_preparing: {
+    backgroundColor: 'rgba(99,102,241,0.2)',
+    color: colors.primarySoft
+  },
+  status_shipping: {
+    backgroundColor: 'rgba(34,211,238,0.2)',
+    color: colors.accent
+  },
+  status_delivered: {
+    backgroundColor: 'rgba(52,211,153,0.2)',
+    color: colors.success
+  },
+  status_cancelled: {
+    backgroundColor: 'rgba(248,113,113,0.2)',
+    color: colors.danger
   }
 });
 

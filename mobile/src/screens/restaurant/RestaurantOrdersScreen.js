@@ -1,7 +1,9 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Screen from '../../components/Screen';
 import AppHeader from '../../components/AppHeader';
 import Card from '../../components/Card';
+import Button from '../../components/Button';
 import Chip from '../../components/Chip';
 import { colors, spacing, typography } from '../../styles/theme';
 import { useAuth } from '../../hooks/useAuth';
@@ -18,6 +20,7 @@ const statuses = [
 
 const RestaurantOrdersScreen = () => {
   const { user } = useAuth();
+  const navigation = useNavigation();
   const { orders, updateOrderStatus, addOrderNote } = useOrders();
   const { restaurants } = useRestaurants();
   const restaurantId =
@@ -70,6 +73,11 @@ const RestaurantOrdersScreen = () => {
             placeholderTextColor={colors.textMuted}
             value={order.note ?? ''}
             onChangeText={(value) => addOrderNote(order.id, value)}
+          />
+          <Button
+            label="Xem chi tiết"
+            variant="ghost"
+            onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
           />
         </Card>
       ))}

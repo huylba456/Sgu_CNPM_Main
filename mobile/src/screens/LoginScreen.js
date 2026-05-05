@@ -26,7 +26,7 @@ const LoginScreen = ({ navigation }) => {
     address: ''
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setMessage('');
     if (mode === 'login') {
       const result = login(loginForm.email.trim(), loginForm.password);
@@ -58,7 +58,7 @@ const LoginScreen = ({ navigation }) => {
       phone: registerForm.phone.trim(),
       address: registerForm.address.trim()
     };
-    const result = register(payload);
+    const result = await register(payload);
     if (!result.success) {
       setMessage(result.message ?? 'Không thể đăng ký tài khoản');
       return;

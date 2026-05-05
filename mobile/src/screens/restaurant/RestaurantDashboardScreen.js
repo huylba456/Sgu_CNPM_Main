@@ -171,14 +171,18 @@ const RestaurantDashboardScreen = () => {
               </View>
               {selectedRestaurant.orders.length > 0 ? (
                 <View style={styles.orderList}>
-                  {selectedRestaurant.orders.map((order) => (
-                    <View key={order.id} style={styles.orderRow}>
-                      <Text style={styles.orderId}>{order.id}</Text>
-                      <Text style={styles.customer}>{order.customerName}</Text>
-                      <Text style={[styles.status, styles[`status_${order.status}`]]}>
-                        {statusLabels[order.status] ?? order.status}
+                  {selectedRestaurant.orders.slice(0, 5).map((order) => (
+                    <View key={order.id} style={styles.historyCard}>
+                      <View style={styles.historyHeader}>
+                        <Text style={styles.historyTitle}>Đơn {order.code ?? order.id}</Text>
+                        <Text style={[styles.statusBadge, styles[`status_${order.status}`]]}>
+                          {statusLabels[order.status] ?? order.status}
+                        </Text>
+                      </View>
+                      <Text style={styles.panelMeta}>Khách hàng: {order.customerName}</Text>
+                      <Text style={styles.panelMeta}>
+                        Tổng tiền: {order.total.toLocaleString('vi-VN')} đ • Drone: {order.droneId ?? 'Chưa gán'}
                       </Text>
-                      <Text style={styles.total}>{order.total.toLocaleString('vi-VN')} đ</Text>
                     </View>
                   ))}
                 </View>
@@ -246,16 +250,24 @@ const RestaurantDashboardScreen = () => {
 
           <Card style={styles.panel}>
             <Text style={styles.panelTitle}>Đơn gần đây</Text>
-            {restaurantOrders.map((order) => (
-              <View key={order.id} style={styles.orderRow}>
-                <Text style={styles.orderId}>{order.id}</Text>
-                <Text style={styles.customer}>{order.customerName}</Text>
-                <Text style={[styles.status, styles[`status_${order.status}`]]}>
-                  {statusLabels[order.status] ?? order.status}
-                </Text>
-                <Text style={styles.total}>{order.total.toLocaleString('vi-VN')} đ</Text>
-              </View>
-            ))}
+            {restaurantOrders.length === 0 ? (
+              <Text style={styles.emptyText}>Chưa có đơn hàng nào.</Text>
+            ) : (
+              restaurantOrders.slice(0, 5).map((order) => (
+                <View key={order.id} style={styles.historyCard}>
+                  <View style={styles.historyHeader}>
+                    <Text style={styles.historyTitle}>Đơn {order.code ?? order.id}</Text>
+                    <Text style={[styles.statusBadge, styles[`status_${order.status}`]]}>
+                      {statusLabels[order.status] ?? order.status}
+                    </Text>
+                  </View>
+                  <Text style={styles.panelMeta}>Khách hàng: {order.customerName}</Text>
+                  <Text style={styles.panelMeta}>
+                    Tổng tiền: {order.total.toLocaleString('vi-VN')} đ • Drone: {order.droneId ?? 'Chưa gán'}
+                  </Text>
+                </View>
+              ))
+            )}
           </Card>
         </>
       ) : (
@@ -311,25 +323,29 @@ const styles = StyleSheet.create({
   orderList: {
     gap: spacing.sm
   },
-  orderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
+  historyCard: {
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    gap: spacing.xs,
+    backgroundColor: colors.surface
   },
-  orderId: {
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  historyTitle: {
     color: colors.text,
     fontWeight: '600'
   },
-  customer: {
-    color: colors.textMuted,
-    flex: 1,
-    marginLeft: spacing.sm
-  },
-  status: {
+  statusBadge: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: 999,
     fontSize: typography.small,
+    overflow: 'hidden',
     color: colors.text
   },
   status_pending: {
@@ -351,10 +367,6 @@ const styles = StyleSheet.create({
   status_cancelled: {
     backgroundColor: 'rgba(248,113,113,0.2)',
     color: colors.danger
-  },
-  total: {
-    color: colors.accent,
-    fontWeight: '700'
   },
   overviewRow: {
     borderWidth: 1,
